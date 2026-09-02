@@ -1,0 +1,2269 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IceProsound - ERP System</title>
+    <!-- Tailwind CSS (CDN for UI) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Dark Theme Core Styles (Brightened for clarity & professionalism) */
+        body {
+            background-color: #1e293b; /* สว่างขึ้น เป็นโทน Slate 800 ดูสากลและสบายตา */
+            color: #f8fafc; /* ข้อความสีขาวสว่างขึ้น (Slate 50) ให้อ่านง่าย */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
+        }
+        
+        /* 🎨 ลายน้ำจักรวาล (The Supreme Watermark) - ผสาน 3 ภาพเข้าด้วยกันอย่างกลมกลืน */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: 
+                url('assets/ice-logo.jpg'),
+                url('assets/ice-faital.png'),
+                url('assets/speakers.png');
+            background-position: 
+                left 5% top 5%, /* โลโก้ ICE มุมซ้ายบน */
+                center center, /* โลโก้ ICE + FaitalPRO ตรงกลาง */
+                center bottom; /* ลำโพงฐานล่าง */
+            background-size: 
+                100px, 
+                auto 60%, 
+                cover;
+            background-repeat: no-repeat;
+            opacity: 0.35; /* เพิ่มความชัดเจนของลายน้ำให้สว่างขึ้น */
+            z-index: -1;
+            pointer-events: none;
+            mix-blend-mode: screen; /* เปลี่ยนเป็น screen เพื่อขับแสงสีขาว/เทาให้เด้งขึ้นมา และกรองสีดำทิ้ง */
+            filter: grayscale(100%); /* คงความเป็นขาวดำเพื่อความพรีเมียม */
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.85); /* Slate 800 ทึบขึ้นเป็น 85% ป้องกันลายน้ำกวนตัวหนังสือ */
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        .ice-glow {
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+        }
+        
+        /* 🖨️ รูปแบบสำหรับการพิมพ์ (Print Media Query) */
+        @media print {
+            @page {
+                size: A4 landscape; /* บังคับกระดาษ A4 แนวนอน */
+                margin: 0.5cm; /* ขอบกระดาษพอดี ไม่ให้ตกขอบ */
+            }
+            
+            /* 1. ซ่อนส่วนที่ไม่ต้องการแบบเด็ดขาด (ป้องกันลายน้ำดันหน้าจอ) */
+            nav, footer, #floatingCartBtn, #itemModal, #cartModal, .no-print, #dashboardSection, #storeSection, .fixed.inset-0, body::before { 
+                display: none !important; 
+            }
+            
+            /* ตัดไฟ Footer และ Nav ทิ้งแบบ 100% (รับประกันว่าจะไม่โผล่มากวนใจอีก) */
+            footer, footer.glass-panel, nav, nav.md\:hidden { display: none !important; opacity: 0 !important; visibility: hidden !important; }
+            
+            /* 2. ล้างค่า Layout (Flex/Grid/Height) ที่จะทำให้หน้ากระดาษเพี้ยนหรือตารางตกไปอยู่ข้างล่าง */
+            body, main, section, .grid, .glass-panel, .max-w-7xl { 
+                display: block !important; 
+                height: auto !important; 
+                min-height: 0 !important; 
+                position: relative !important; 
+                background: white !important; 
+                color: black !important; 
+                border: none !important; 
+                box-shadow: none !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+            }
+            
+            h1, h2, h3, p, label, span, td, th { color: black !important; }
+            
+            /* การจัดการตารางไม่ให้ล้นหรือตกบรรทัด */
+            table { width: 100% !important; border-collapse: collapse !important; border: 1px solid black !important; table-layout: fixed !important; }
+            thead { display: table-header-group !important; } /* ให้หัวตารางแสดงซ้ำทุกหน้าเมื่อขึ้นหน้าใหม่ */
+            th, td { border: 1px solid black !important; padding: 6px !important; text-align: left !important; word-wrap: break-word !important; }
+            th { background-color: #f3f4f6 !important; font-weight: bold !important; font-size: 14px !important; }
+            td { font-size: 13px !important; } /* ปรับขนาดตัวอักษรให้พอดีในแนวนอน */
+            
+            /* กำหนดความกว้างคอลัมน์ให้สมส่วน */
+            th:nth-child(1), td:nth-child(1) { width: 20% !important; } /* ชื่อ-นามสกุล */
+            th:nth-child(2), td:nth-child(2) { width: 15% !important; } /* ตำแหน่ง */
+            th:nth-child(3), td:nth-child(3) { width: 25% !important; } /* เบอร์/ไลน์ */
+            th:nth-child(4), td:nth-child(4) { width: 40% !important; } /* ที่อยู่ (กว้างสุด) */
+
+            #staffSection { display: block !important; padding: 0 !important; } /* บังคับให้แสดงหน้าพนักงานตอนพิมพ์ */
+            #dashboardSection, #storeSection { display: none !important; }
+        }
+    </style>
+
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- Firebase Configuration & Initialization -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw_5gohfTx5nJtx5BDbIAbvu3Hks8rV70",
+            authDomain: "iceprosound-11be6.firebaseapp.com",
+            projectId: "iceprosound-11be6",
+            storageBucket: "iceprosound-11be6.firebasestorage.app",
+            messagingSenderId: "892730685361",
+            appId: "1:892730685361:web:f9c09773176c1df140af90"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Watermark Background -->
+    <div class="fixed inset-0 flex justify-center items-center pointer-events-none z-[-1]">
+        <img src="img/watermark.png" alt="ICE Watermark" class="w-2/3 md:w-1/3 opacity-10 object-contain mix-blend-screen">
+    </div>
+
+    <!-- Navbar -->
+    <nav class="glass-panel p-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-2xl font-bold text-blue-400 tracking-wider">
+            ICE<span class="text-white">PROSOUND</span>
+        </div>
+        <!-- เมนูหลัก ซ่อนบนมือถือ แสดงบนคอม (hidden md:flex) -->
+        <div class="hidden md:flex space-x-6 text-lg">
+            <button onclick="showDashboard()" class="hover:text-blue-400 transition">แดชบอร์ด</button>
+            <button onclick="showReport()" class="hover:text-blue-400 transition">📊 รายงาน</button>
+            <button onclick="showStore()" class="hover:text-blue-400 transition text-blue-400">งานช่าง (เบิก/ยืม)</button>
+            <!-- Settings Dropdown Container -->
+            <div class="relative">
+                <button onclick="toggleSettingsMenu()" class="hover:text-blue-400 transition flex items-center gap-1">
+                    ⚙️ ตั้งค่าระบบ
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <!-- Dropdown Menu (ซ่อนโดยปริยาย) -->
+                <div id="settingsDropdown" class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-[100] hidden border border-gray-700">
+                    <button onclick="showInventory()" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">คลังสินค้า</button>
+                    <button class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">ข้อมูลลูกค้า</button>
+                    <button onclick="showStaff()" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">ตั้งค่าพนักงาน</button>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <!-- ปุ่มสแกน QR Code สำหรับมือถือ -->
+            <button class="md:hidden bg-gray-700 hover:bg-gray-600 p-2 rounded text-white ice-glow transition">
+                🔳 Scan
+            </button>
+            <span class="text-sm text-gray-400 hidden sm:inline">ผู้ใช้งาน: Boss Thep-Apai</span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-6">
+        <div class="max-w-7xl mx-auto space-y-6">
+
+            <!-- ============================================== -->
+            <!-- SECTION: แดชบอร์ด (DASHBOARD) - ซ่อนเป็นค่าเริ่มต้น -->
+            <!-- ============================================== -->
+            <section id="dashboardSection" class="hidden animate-fade-in space-y-6">
+                <div class="flex justify-between items-end border-b border-gray-700 pb-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-2">แผงควบคุม (Dashboard)</h1>
+                        <p class="text-gray-400">พื้นที่สำหรับสร้างรายงานใหม่ (รอการพัฒนาในอนาคต)</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- SECTION: รายงาน (REPORT) -->
+            <!-- ============================================== -->
+            <section id="reportSection" class="hidden animate-fade-in space-y-6">
+                <div class="flex justify-between items-end border-b border-gray-700 pb-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-2">📊 รายงานการเบิก-ยืมอุปกรณ์</h1>
+                        <p class="text-gray-400">ภาพรวมข้อมูลพนักงานและไซต์งาน (Real-time Firebase)</p>
+                    </div>
+                    <button onclick="loadReportData()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-white transition flex items-center gap-2">
+                        <span>🔄 รีเฟรชข้อมูล</span>
+                    </button>
+                </div>
+
+                <!-- ตารางแสดงข้อมูล -->
+                <div class="glass-panel rounded-lg overflow-x-auto border border-slate-600">
+                    <table class="w-full text-left text-sm text-slate-200">
+                        <thead class="bg-slate-700/90 text-slate-100 text-[15px] font-bold tracking-wide border-b-2 border-slate-500">
+                            <tr class="whitespace-nowrap">
+                                <th class="px-6 py-4">วันเวลาเบิก</th>
+                                <th class="px-6 py-4">ช่าง / พนักงาน</th>
+                                <th class="px-6 py-4">ไซต์งาน</th>
+                                <th class="px-6 py-4">เซลล์ผู้ดูแล</th>
+                                <th class="px-6 py-4 text-center">จำนวนอุปกรณ์ (ชิ้น)</th>
+                                <th class="px-6 py-4 text-center">สถานะ</th>
+                                <th class="px-6 py-4 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody" class="divide-y divide-slate-600/50 bg-slate-800/30">
+                            <!-- ข้อมูลจาก Firebase จะถูกแทรกที่นี่ -->
+                            <tr><td colspan="7" class="text-center py-10 text-slate-400">กำลังโหลดข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- SECTION: ระบบเบิก-ยืม (STORE) - แสดงเป็นค่าเริ่มต้น -->
+            <!-- ============================================== -->
+            <section id="storeSection" class="space-y-6 animate-fade-in">
+                <!-- Header Section (จัดเรียงบนมือถือให้ซ้อนกันแบบ Column) -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-gray-700 pb-4 space-y-4 md:space-y-0">
+                <div class="w-full md:w-auto">
+                    <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">ระบบจัดการเบิก-ยืมอุปกรณ์</h1>
+                    <p class="text-sm md:text-base text-gray-400">เลือกสินค้าและอุปกรณ์สำหรับหน้างาน (Sales, Rental, Repair)</p>
+                </div>
+            </div>
+
+            <!-- Categories Grid (17 หมวดหมู่หลักจากระบบ) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                <!-- Image 1 Categories -->
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('รายการโคมไฟ')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">💡</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">รายการโคมไฟ</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('ไฟเลเซอร์ + CO2')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">💨</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">ไฟเลเซอร์ + CO2</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('บอร์ดคอนโทรลไฟ+บูทเตอร์')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🎛️</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">บอร์ดคอนโทรลไฟ+บูทเตอร์</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('สายสัญญาณไฟ')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🔌</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">สายสัญญาณไฟ</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('สายไฟ')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">⚡</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">สายไฟ</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('หมวก+แขนโคมไฟ')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🏗️</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">หมวก+แขนโคมไฟ</h2>
+                </div>
+
+                <!-- Image 2 Categories -->
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('ลำโพง')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🔊</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">ลำโพง</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('เพาเวอร์แอมป์')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🔋</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">เพาเวอร์แอมป์</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('มิกซ์+คอนโทรล')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🎚️</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">มิกซ์+คอนโทรล</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('สายไฟ+สายสัญญาณ+ตู้ไฟ')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🔌</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">สายไฟ+สายสัญญาณ+ตู้ไฟ</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('แร็คอุปกรณ์')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🗄️</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">แร็คอุปกรณ์</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('ชุดไมโครโฟน+เครื่องควบคุม+ขาไมค์')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🎤</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">ชุดไมโครโฟน+เครื่องควบคุม+ขาไมค์</h2>
+                </div>
+
+                <!-- Image 3 Categories -->
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('รายการ Truss')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">⛩️</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">รายการ Truss</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('รายการรอกไฟฟ้า')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">⛓️</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">รายการรอกไฟฟ้า</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('รายการนั่งร้านลิ่มล็อค')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🪜</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">รายการนั่งร้านลิ่มล็อค</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('รายการเวที')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">🎭</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">รายการเวที</h2>
+                </div>
+                <div class="glass-panel p-4 rounded-lg hover:border-blue-500 transition cursor-pointer flex flex-row items-center justify-start px-6 space-x-4 group overflow-hidden" onclick="openModal('รายการเมการูฟ')">
+                    <div class="text-4xl shrink-0 group-hover:scale-110 transition">⛺</div>
+                    <h2 class="text-base md:text-lg font-bold text-blue-300 whitespace-nowrap">รายการเมการูฟ</h2>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer (Premium Company Info) -->
+    <footer class="glass-panel p-6 md:p-8 mt-auto pb-24 md:pb-8 border-t border-slate-700/50 relative z-10 no-print">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-6 text-center md:text-left">
+            
+            <!-- Address Section -->
+            <div class="flex-1">
+                <h3 class="text-xl font-bold text-blue-400 mb-2">บริษัท ไอซ์ โปรซาวด์ จำกัด</h3>
+                <p class="text-slate-300 text-sm leading-relaxed">
+                    สำนักงานใหญ่ 728 ถนน เพชรเกษม<br>
+                    ตำบลห้วยจรเข้ อำเภอเมืองนครปฐม<br>
+                    จังหวัดนครปฐม 73000
+                </p>
+                <div class="mt-3 text-slate-300 text-sm">
+                    <span class="font-semibold text-blue-300">📞 โทรศัพท์:</span> 086-366-4434, 095-761-4224
+                </div>
+            </div>
+
+            <!-- Social Links Section -->
+            <div class="flex-1 flex flex-col items-center md:items-end">
+                <h3 class="text-lg font-bold text-slate-200 mb-3">ติดตามเรา (Follow Us)</h3>
+                <div class="flex flex-wrap justify-center md:justify-end gap-3">
+                    <a href="https://iceprosound.com/" target="_blank" class="px-4 py-2 bg-slate-800 hover:bg-blue-600 text-slate-200 hover:text-white rounded-lg border border-slate-600 hover:border-blue-500 transition shadow-sm text-sm flex items-center gap-2">
+                        🌐 Website
+                    </a>
+                    <a href="https://web.facebook.com/iceprosound2025" target="_blank" class="px-4 py-2 bg-slate-800 hover:bg-[#1877F2] text-slate-200 hover:text-white rounded-lg border border-slate-600 hover:border-[#1877F2] transition shadow-sm text-sm flex items-center gap-2">
+                        📘 Facebook
+                    </a>
+                    <a href="https://www.instagram.com/iceled_official/" target="_blank" class="px-4 py-2 bg-slate-800 hover:bg-pink-600 text-slate-200 hover:text-white rounded-lg border border-slate-600 hover:border-pink-500 transition shadow-sm text-sm flex items-center gap-2">
+                        📸 Instagram
+                    </a>
+                    <a href="https://page.line.me/ulz0299w?oat_content=url&openQrModal=true" target="_blank" class="px-4 py-2 bg-slate-800 hover:bg-[#00B900] text-slate-200 hover:text-white rounded-lg border border-slate-600 hover:border-[#00B900] transition shadow-sm text-sm flex items-center gap-2">
+                        💬 LINE
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Copyright -->
+        <div class="mt-8 pt-4 border-t border-slate-700/50 text-center text-xs text-slate-500">
+            &copy; 2026 IceProsound System. Developed with love by Lilin & Boss Thep-Apai.
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation Bar (แสดงเฉพาะมือถือ) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 glass-panel border-t border-gray-700 z-50">
+        <div class="flex justify-around items-center p-2">
+            <!-- 1. แดชบอร์ด -->
+            <button onclick="showDashboard()" class="flex-1 flex flex-col items-center p-2 text-gray-400 hover:text-blue-400 transition">
+                <span class="text-xl">🏠</span>
+                <span class="text-[10px] mt-1">หน้าหลัก</span>
+            </button>
+            <!-- 2. รายงาน -->
+            <button onclick="showReport()" class="flex-1 flex flex-col items-center p-2 text-gray-400 hover:text-blue-400 transition">
+                <span class="text-xl">📊</span>
+                <span class="text-[10px] mt-1">รายงาน</span>
+            </button>
+            <!-- 3. งานช่าง (เบิกของ) - ปุ่มเด่นตรงกลาง -->
+            <button onclick="showStore()" class="flex-1 flex flex-col items-center p-2 text-blue-400 hover:text-blue-300 transition">
+                <span class="text-2xl">📝</span>
+                <span class="text-[10px] mt-1 font-bold">เบิกอุปกรณ์</span>
+            </button>
+            
+            <!-- 4. ตั้งค่า (Dropdown แบบ Desktop) -->
+            <div class="flex-1 relative">
+                <button onclick="toggleSettingsMenuMobile()" class="flex flex-col items-center p-2 text-gray-400 hover:text-blue-400 transition w-full">
+                    <span class="text-xl">⚙️</span>
+                    <span class="text-[10px] mt-1 flex items-center gap-1 justify-center">ตั้งค่า <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></span>
+                </button>
+                
+                <!-- Dropdown Menu (จะเปิดขึ้นมาด้านบน) -->
+                <div id="settingsDropdownMobile" class="absolute bottom-full right-0 mb-2 w-40 bg-gray-800 rounded-md shadow-lg py-1 z-[100] hidden border border-gray-700">
+                    <button onclick="showInventory(); toggleSettingsMenuMobile()" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">📦 คลังสินค้า</button>
+                    <button onclick="toggleSettingsMenuMobile()" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">👥 ลูกค้า</button>
+                    <button onclick="showStaff(); toggleSettingsMenuMobile()" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">🧑‍🔧 ตั้งค่าพนักงาน</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 🛒 FLOATING CART BUTTON 🛒 -->
+    <button id="floatingCartBtn" onclick="openCartModal()" class="fixed bottom-24 right-6 md:bottom-10 md:right-10 bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-full shadow-2xl ice-glow z-[105] transition-transform hover:scale-110 flex items-center justify-center">
+        <span class="text-2xl">🛒</span>
+        <span id="cartCountBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#121212]">0</span>
+    </button>
+
+    <!-- 🛒 CART MODAL (ป๊อปอัปตะกร้าเบิกอุปกรณ์) 🛒 -->
+    <div id="cartModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[110] hidden justify-end opacity-0 transition-opacity duration-300">
+        <div class="glass-panel w-full max-w-full h-[100vh] rounded-none border-l border-slate-600 shadow-2xl overflow-hidden flex flex-col transform translate-x-full transition-transform duration-300" id="cartModalContent">
+            
+            <!-- Cart Header -->
+            <div class="flex justify-between items-center p-5 border-b border-slate-600 bg-slate-700/80">
+                <div class="flex items-center space-x-3">
+                    <span class="text-3xl">🛒</span>
+                    <h3 class="text-xl md:text-2xl font-bold text-blue-400 drop-shadow-md">รายการเบิกอุปกรณ์</h3>
+                    <span id="cartTotalItems" class="bg-blue-900/80 text-blue-200 font-medium text-sm px-3 py-1 rounded-full ml-2 border border-blue-500/50 shadow-sm">0 รายการ</span>
+                </div>
+                <button onclick="closeCartModal()" class="text-slate-300 hover:text-red-400 hover:bg-red-400/20 p-2 rounded-lg transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 💡 2-Column Layout: รายการสินค้า (ซ้าย) | ฟอร์ม (ขวา) -->
+            <div class="flex flex-col md:flex-row flex-grow overflow-y-auto md:overflow-hidden">
+
+            <!-- Cart Body (ฝั่งซ้าย: รายการสินค้าที่เบิก) -->
+            <div class="p-4 overflow-y-auto min-h-[40vh] flex-shrink-0 md:flex-shrink md:flex-grow md:w-3/5 custom-scrollbar bg-slate-800/60">
+                <!-- ตารางรายการเบิก (แสดงเฉพาะคอม) / การ์ด (แสดงบนมือถือ) -->
+                <div id="cartItemList" class="space-y-3">
+                    <!-- รายการในตะกร้าจะถูกสร้างที่นี่ -->
+                    <div class="text-center text-slate-400 py-10 font-medium">
+                        <div class="text-5xl mb-3 opacity-60">📦</div>
+                        <p>ยังไม่มีรายการเบิกอุปกรณ์</p>
+                        <p class="text-sm mt-1 text-slate-500">กรุณากด "+ เลือก" จากหมวดหมู่สินค้า</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart Footer (ฝั่งขวา: ฟอร์มกรอกข้อมูล & ปุ่มบันทึก) -->
+            <div class="p-5 border-t md:border-t-0 md:border-l border-slate-600 bg-slate-700/80 flex flex-col gap-4 flex-shrink-0 md:w-2/5 overflow-y-auto custom-scrollbar">
+                
+                <!-- 📋 ฟอร์มกรอกข้อมูลการเบิก/ยืม (5 ช่อง) 📋 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-800/60 p-4 rounded-lg border border-slate-500/50">
+                    
+                    <!-- 1. ชื่อผู้เบิก/พนักงาน -->
+                    <div>
+                        <label class="block text-sm text-slate-300 mb-1 font-medium">ชื่อผู้เบิก/พนักงาน <span class="text-red-400">*</span></label>
+                        <input list="dynamicStaffList" type="text" id="techName" placeholder="เลือกหรือพิมพ์ชื่อพนักงาน..." class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
+                    </div>
+
+                    <!-- 2. รหัสผ่านยืนยัน (PIN) -->
+                    <div>
+                        <label class="block text-sm text-slate-300 mb-1 font-medium">รหัสผ่านยืนยัน (PIN) <span class="text-red-400">*</span></label>
+                        <input type="password" id="techPin" placeholder="***" class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition text-center tracking-widest">
+                    </div>
+
+                    <!-- 3. ไซต์งาน -->
+                    <div>
+                        <label class="block text-sm text-slate-300 mb-1 font-medium">ไซต์งาน (รับงานแล้ว) <span class="text-red-400">*</span></label>
+                        <input list="jobSitesList" type="text" id="jobSite" placeholder="เช่น J01 หรือ งานแต่ง..." class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
+                        <datalist id="jobSitesList">
+                            <option value="J01 - งานแต่ง รร.ดุสิต">
+                            <option value="J02 - คอนเสิร์ตลานเบียร์">
+                            <option value="J03 - งานอีเวนต์พารากอน">
+                        </datalist>
+                    </div>
+
+                    <!-- 4. ผู้อนุมัติ -->
+                    <div>
+                        <label class="block text-sm text-slate-300 mb-1 font-medium">ผู้อนุมัติ <span class="text-red-400">*</span></label>
+                        <input list="dynamicStaffList" type="text" id="approverName" placeholder="เลือกหรือพิมพ์ชื่อผู้อนุมัติ..." class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
+                    </div>
+
+                    <!-- 5. ผู้ให้เบิก/ยืม -->
+                    <div>
+                        <label class="block text-sm text-slate-300 mb-1 font-medium">ผู้ให้เบิก/ยืม <span class="text-red-400">*</span></label>
+                        <input list="dynamicStaffList" type="text" id="issuerName" placeholder="เลือกหรือพิมพ์ชื่อผู้ให้เบิก..." class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
+                    </div>
+
+                    <!-- ตัวดึงข้อมูล (Datalist กลาง ดึงรายชื่อพนักงานจาก Firebase) -->
+                    <datalist id="dynamicStaffList"></datalist>
+                </div>
+
+                <!-- ℹ️ Info Card แสดงข้อมูลที่ถูกดึงมาอัตโนมัติ (ซ่อนไว้ก่อน) ℹ️ -->
+                <div id="autoPopulateInfo" class="hidden bg-blue-900/30 border border-blue-500/50 rounded-lg p-3 text-sm text-blue-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                            <p><strong>👤 พนักงาน:</strong> <span id="infoTechFullName">-</span></p>
+                            <p><strong>🏷️ ตำแหน่ง:</strong> <span id="infoTechRole">-</span></p>
+                        </div>
+                        <div>
+                            <p><strong>📍 สถานที่:</strong> <span id="infoJobAddress">-</span></p>
+                            <p><strong>📞 ติดต่อ:</strong> <span id="infoJobContact">-</span></p>
+                            <p><strong>👔 เซลล์:</strong> <span id="infoJobSale">-</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-2">
+                    <div class="text-sm text-gray-400 w-full sm:w-auto text-center sm:text-left">
+                        ตรวจสอบรายการให้ครบถ้วนก่อนบันทึก
+                    </div>
+                    <div class="flex space-x-3 w-full sm:w-auto">
+                        <button onclick="clearCart()" class="w-full sm:w-auto px-4 py-3 sm:py-2 bg-red-600/20 hover:bg-red-600/40 border border-red-500/50 text-red-400 rounded-lg transition font-medium">ล้างตะกร้า</button>
+                        <button onclick="saveToFirebase()" class="w-full sm:w-auto px-6 py-3 sm:py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition font-bold shadow-lg ice-glow flex items-center justify-center gap-2">
+                            <span id="saveBtnText">บันทึกใบเบิกและยืม 📝</span>
+                            <span id="saveSpinner" class="hidden animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            </div>
+            <!-- END 2-Column Layout -->
+        </div>
+    </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- SECTION: ระบบคลังสินค้า (INVENTORY) - ซ่อนเป็นค่าเริ่มต้น -->
+    <!-- ============================================== -->
+    <section id="inventorySection" class="hidden animate-fade-in space-y-6 px-4 md:px-0 pb-32">
+        <div class="flex flex-col md:flex-row md:justify-between items-start md:items-end border-b border-gray-700 pb-4 gap-4 no-print">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2">📦 ฐานข้อมูลคลังสินค้า</h1>
+                <p class="text-sm md:text-base text-gray-400">จัดการข้อมูลสินค้า SKU จำนวนคงเหลือ และราคาขาย</p>
+            </div>
+            <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                <button onclick="exportInventoryToExcel()" class="flex-1 md:flex-none bg-green-600 hover:bg-green-500 px-3 py-2 text-sm md:text-base md:px-4 rounded text-white transition flex items-center justify-center gap-1 md:gap-2">
+                    📊 <span class="hidden sm:inline">ส่งออก</span> Excel
+                </button>
+                <button onclick="printInventoryReport()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-500 px-3 py-2 text-sm md:text-base md:px-4 rounded text-white transition flex items-center justify-center gap-1 md:gap-2">
+                    🖨️ <span class="hidden sm:inline">พิมพ์ /</span> PDF
+                </button>
+                <button onclick="loadInventoryData()" class="flex-none bg-gray-700 hover:bg-gray-600 px-3 py-2 text-sm md:text-base md:px-4 rounded text-white transition flex items-center justify-center gap-1 md:gap-2">
+                    🔄
+                </button>
+                <button onclick="openInventoryModal()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm md:text-base rounded text-white transition font-bold shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 mt-1 md:mt-0">
+                    ➕ เพิ่มสินค้าใหม่
+                </button>
+            </div>
+        </div>
+
+        <!-- 📊 สรุปยอดคลังสินค้า (Summary Cards) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="glass-panel p-6 rounded-xl border border-gray-700 flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm font-medium mb-1">ยอดรวมสินค้าคงเหลือ</p>
+                    <h3 class="text-3xl font-bold text-white"><span id="totalInventoryItems">0</span> <span class="text-lg text-gray-500 font-normal">ชิ้น</span></h3>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-2xl">📦</div>
+            </div>
+            <div class="glass-panel p-6 rounded-xl border border-gray-700 flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm font-medium mb-1">มูลค่าคลังรวมทั้งหมด</p>
+                    <h3 class="text-3xl font-bold text-green-400"><span id="totalInventoryValue">0.00</span> <span class="text-lg text-gray-500 font-normal">บาท</span></h3>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-2xl">💰</div>
+            </div>
+        </div>
+
+        <!-- 🔍 ค้นหาและกรองสินค้า -->
+        <div class="glass-panel p-4 rounded-xl border border-gray-700 flex flex-col md:flex-row gap-4 mb-4">
+            <div class="flex-1 relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="text-gray-400">🔍</span>
+                </div>
+                <input type="text" id="invSearchInput" onkeyup="filterInventory()" class="w-full bg-gray-900/50 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white focus:border-blue-500 outline-none transition" placeholder="พิมพ์ชื่อ หรือ SKU เพื่อค้นหา...">
+            </div>
+            <div class="flex-1 relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="text-gray-400">📁</span>
+                </div>
+                <input type="text" id="invCategorySearchInput" onkeyup="filterInventory()" class="w-full bg-gray-900/50 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white focus:border-blue-500 outline-none transition" placeholder="พิมพ์หมวดหมู่เพื่อกรอง...">
+            </div>
+        </div>
+
+        <!-- ตารางแสดงรายการสินค้า -->
+        <div class="glass-panel rounded-lg overflow-x-auto border border-gray-700 shadow-xl">
+            <table class="w-full text-left text-sm text-gray-300">
+                <thead class="bg-gray-800 text-gray-200 font-bold border-b-2 border-gray-700">
+                    <tr class="whitespace-nowrap">
+                        <th class="px-6 py-4">SKU / รหัสสินค้า</th>
+                        <th class="px-6 py-4">ชื่อสินค้า</th>
+                        <th class="px-6 py-4">หมวดหมู่</th>
+                        <th class="px-6 py-4 text-center">คงเหลือ (หน่วย)</th>
+                        <th class="px-6 py-4 text-right">ราคาทุน</th>
+                        <th class="px-6 py-4 text-right">ราคาขายปลีก</th>
+                        <th class="px-6 py-4 text-center">การตั้งค่า</th>
+                        <th class="px-6 py-4 text-center no-print">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTableBody" class="divide-y divide-gray-700/50 bg-gray-900/30">
+                    <!-- ข้อมูลคลังสินค้าจาก Firebase จะถูกแทรกที่นี่ -->
+                    <tr><td colspan="8" class="text-center py-10 text-gray-500">กำลังโหลดข้อมูล...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 🌟 MODAL (ฟอร์มเพิ่ม/แก้ไขสินค้า) 🌟 -->
+    <div id="inventoryModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex-col items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-4xl rounded-2xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center p-5 border-b border-gray-700 bg-gray-800/50">
+                <h3 id="invModalTitle" class="text-xl md:text-2xl font-bold text-blue-400">➕ เพิ่มสินค้าใหม่</h3>
+                <button onclick="closeInventoryModal()" class="text-gray-400 hover:text-red-400 p-2 rounded transition">✖️</button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto custom-scrollbar">
+                <form id="inventoryForm" onsubmit="saveProduct(event)" class="space-y-6">
+                    <input type="hidden" id="invProductId">
+                    
+                    <!-- ส่วนที่ 1: ข้อมูลหลัก -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">รหัสสินค้า (SKU) <span class="text-red-400">*</span></label>
+                            <input type="text" id="invSku" required class="w-full bg-gray-900/50 border border-gray-600 rounded p-2 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="เช่น ICE-001">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">หมวดสินค้า <span class="text-red-400">*</span></label>
+                            <select id="invCategory" required class="w-full bg-gray-900/50 border border-gray-600 rounded p-2 text-white focus:border-blue-500 outline-none transition">
+                                <option value="" disabled selected>เลือกหมวดหมู่...</option>
+                                <option value="รายการโคมไฟ">รายการโคมไฟ</option>
+                                <option value="ไฟเลเซอร์ + CO2">ไฟเลเซอร์ + CO2</option>
+                                <option value="บอร์ดคอนโทรลไฟ+บูทเตอร์">บอร์ดคอนโทรลไฟ+บูทเตอร์</option>
+                                <option value="สายสัญญาณไฟ">สายสัญญาณไฟ</option>
+                                <option value="สายไฟ">สายไฟ</option>
+                                <option value="หมวก+แขนโคมไฟ">หมวก+แขนโคมไฟ</option>
+                                <option value="ลำโพง">ลำโพง</option>
+                                <option value="เพาเวอร์แอมป์">เพาเวอร์แอมป์</option>
+                                <option value="มิกซ์+คอนโทรล">มิกซ์+คอนโทรล</option>
+                                <option value="สายไฟ+สายสัญญาณ+ตู้ไฟ">สายไฟ+สายสัญญาณ+ตู้ไฟ</option>
+                                <option value="อื่นๆ">อื่นๆ</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm text-gray-400 mb-1">ชื่อรายละเอียดสินค้า <span class="text-red-400">*</span></label>
+                            <input type="text" id="invName" required class="w-full bg-gray-900/50 border border-gray-600 rounded p-2 text-white focus:border-blue-500 outline-none transition" placeholder="ระบุชื่อสินค้าแบบเต็ม">
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-700">
+
+                    <!-- ส่วนที่ 2: จำนวนและราคา -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">จำนวนคงเหลือเริ่มต้น <span class="text-red-400">*</span></label>
+                            <input type="number" id="invStock" required min="0" class="w-full bg-gray-900/50 border border-gray-600 rounded p-2 text-white focus:border-blue-500 outline-none" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">หน่วยนับ <span class="text-red-400">*</span></label>
+                            <select id="invUnit" required class="w-full bg-gray-900/50 border border-gray-600 rounded p-2 text-white focus:border-blue-500 outline-none">
+                                <option value="ตัว">ตัว (ย่อย)</option>
+                                <option value="ชิ้น">ชิ้น (เล็ก)</option>
+                                <option value="เส้น">เส้น</option>
+                                <option value="กล่อง">กล่อง</option>
+                                <option value="ลัง">ลัง (ใหญ่)</option>
+                                <option value="ชุด">ชุด</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">ราคาทุน (บาท)</label>
+                            <input type="number" id="invCost" min="0" step="0.01" class="w-full bg-gray-900/50 border border-gray-600 rounded p-2 text-white focus:border-blue-500 outline-none" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-800/30 p-4 rounded-lg border border-gray-700">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">ราคาขายปลีก <span class="text-red-400">*</span></label>
+                            <input type="number" id="invPriceRetail" required min="0" step="0.01" class="w-full bg-green-900/20 border border-green-700/50 rounded p-2 text-white focus:border-green-500 outline-none" placeholder="0.00">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">ราคาขายส่ง ระดับ 1</label>
+                            <input type="number" id="invPriceWholesale1" min="0" step="0.01" class="w-full bg-blue-900/20 border border-blue-700/50 rounded p-2 text-white focus:border-blue-500 outline-none" placeholder="0.00">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">ราคาขายส่ง ระดับ 2</label>
+                            <input type="number" id="invPriceWholesale2" min="0" step="0.01" class="w-full bg-purple-900/20 border border-purple-700/50 rounded p-2 text-white focus:border-purple-500 outline-none" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-700">
+
+                    <!-- ส่วนที่ 3: การตั้งค่าเพิ่มเติม (Toggle) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center justify-between bg-gray-900/50 p-4 rounded border border-gray-600">
+                            <div>
+                                <h4 class="text-white font-medium">อนุญาตให้ลดราคา</h4>
+                                <p class="text-xs text-gray-400">เซลล์สามารถปรับลดราคาหน้าร้านได้</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="invAllowDiscount" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between bg-gray-900/50 p-4 rounded border border-gray-600">
+                            <div>
+                                <h4 class="text-white font-medium">คิดค่าคอมมิชชั่น</h4>
+                                <p class="text-xs text-gray-400">สินค้านี้มีผลต่อยอดคอมมิชชั่นเซลล์</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="invAllowCommission" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end gap-3 border-t border-gray-700">
+                        <button type="button" onclick="closeInventoryModal()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white transition">ยกเลิก</button>
+                        <button type="submit" id="invSubmitBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded font-bold text-white transition shadow-lg flex items-center gap-2">
+                            <span id="invBtnText">💾 บันทึกข้อมูล</span>
+                            <span id="invSpinner" class="hidden animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- SECTION: ระบบตั้งค่าพนักงาน (STAFF) - ซ่อนเป็นค่าเริ่มต้น -->
+    <!-- ============================================== -->
+    <section id="staffSection" class="hidden animate-fade-in space-y-6 px-4 md:px-0 pb-32">
+        <div class="flex justify-between items-end border-b border-gray-700 pb-4 no-print">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">👥 ระบบจัดการพนักงาน</h1>
+                <p class="text-sm md:text-base text-gray-400">เพิ่ม/ลบ ข้อมูลช่างและพนักงาน (อัพเดทไปยัง Firebase แบบ Real-time)</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- ซ้าย: ฟอร์มเพิ่มพนักงาน -->
+            <div class="lg:col-span-1 no-print">
+                <div class="glass-panel p-6 rounded-xl border border-gray-700 h-full">
+                    <h2 class="text-xl font-bold text-blue-400 mb-4 flex items-center gap-2">
+                        <span>➕</span> เพิ่มพนักงานใหม่
+                    </h2>
+                    <form id="addStaffForm" onsubmit="addStaff(event)" class="space-y-4">
+                        <input type="hidden" id="editStaffId" value="">
+                        <div>
+                            <label class="block text-sm text-slate-300 mb-1">ชื่อ - นามสกุล <span class="text-red-400">*</span></label>
+                            <input type="text" id="newStaffName" required placeholder="เช่น สมชาย ใจดี" class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-300 mb-1">ตำแหน่ง</label>
+                            <select id="newStaffRole" class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
+                                <option value="ช่าง">ช่าง (Technician)</option>
+                                <option value="เซลล์">เซลล์ (Sales)</option>
+                                <option value="คลังสินค้า">คลังสินค้า (Warehouse)</option>
+                                <option value="แอดมิน">แอดมิน (Admin)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-300 mb-1">เบอร์โทรศัพท์</label>
+                            <input type="tel" id="newStaffPhone" placeholder="เช่น 0812345678" class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-300 mb-1">ไอดีไลน์ (LINE ID)</label>
+                            <input type="text" id="newStaffLine" placeholder="เช่น @somchai" class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-300 mb-1">ที่อยู่</label>
+                            <textarea id="newStaffAddress" rows="2" placeholder="เช่น 123 หมู่ 4 ต.เมือง..." class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition"></textarea>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="submit" class="w-full mt-4 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition font-bold shadow-lg ice-glow flex items-center justify-center gap-2">
+                                <span id="addStaffBtnText">เพิ่มพนักงาน</span>
+                                <span id="addStaffSpinner" class="hidden animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                            </button>
+                            <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="hidden w-1/3 mt-4 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition font-bold shadow-lg">
+                                ยกเลิก
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ขวา: ตารางรายชื่อพนักงาน -->
+            <div class="lg:col-span-2 print:col-span-3">
+                <div class="glass-panel p-6 rounded-xl border border-gray-700 h-full">
+                    <div class="flex justify-between items-center mb-4 no-print">
+                        <h2 class="text-xl font-bold text-blue-400 flex items-center gap-2">
+                            <span>📋</span> รายชื่อทั้งหมด
+                        </h2>
+                        <div class="flex gap-2">
+                            <button onclick="exportStaffToExcel()" class="text-sm bg-green-600 hover:bg-green-500 px-3 py-1 rounded text-white transition flex items-center gap-1">
+                                📊 ส่งออก Excel
+                            </button>
+                            <button onclick="printStaffData()" class="text-sm bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-white transition flex items-center gap-1">
+                                🖨️ พิมพ์ / PDF
+                            </button>
+                            <button onclick="loadStaffData()" class="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-white transition">
+                                🔄 รีเฟรช
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- ส่วนหัวสำหรับพิมพ์เท่านั้น (มาตรฐาน A4) -->
+                    <div class="hidden print:block text-center mb-8 pt-4">
+                        <h2 class="text-3xl font-bold mt-4 mb-2">ฐานข้อมูลพนักงาน</h2>
+                        <p class="text-gray-800 text-xl font-bold mb-4">บริษัท ไอซ์โปรซาวด์ จำกัด</p>
+                    </div>
+
+                    <!-- ช่องค้นหาพนักงาน -->
+                    <div class="mb-4 no-print">
+                        <div class="flex items-center bg-gray-900/50 border border-gray-600 rounded-lg px-3 py-2 w-full md:w-1/2 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400 transition">
+                            <span class="text-gray-400 mr-2">🔍</span>
+                            <input type="text" id="staffSearchInput" onkeyup="filterStaff()" placeholder="พิมพ์ชื่อ นามสกุล หรือเบอร์โทร เพื่อค้นหา..." class="w-full bg-transparent text-white focus:outline-none text-sm">
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-lg border border-gray-700 print:border-none print:mt-4">
+                        <table class="w-full text-left text-sm text-slate-200">
+                            <thead class="bg-slate-700/90 text-slate-100 font-bold border-b border-gray-600">
+                                <tr>
+                                    <th class="px-6 py-3">ชื่อ - นามสกุล</th>
+                                    <th class="px-6 py-3">ตำแหน่ง</th>
+                                    <th class="px-6 py-3">เบอร์โทร / ไลน์</th>
+                                    <th class="px-6 py-3">ที่อยู่</th>
+                                    <th class="px-6 py-3 text-center no-print">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody" class="bg-gray-800/30">
+                                <tr><td colspan="4" class="text-center py-6 text-slate-400">กำลังโหลด...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 🌟 MODAL (ป๊อปอัปเลือกสินค้าย่อย) 🌟 -->
+    <div id="itemModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex-col items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="glass-panel w-full max-w-2xl rounded-2xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transform scale-95 transition-transform duration-300" id="modalContent">
+            
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-5 border-b border-gray-700 bg-gray-800/50">
+                <div class="flex items-center space-x-3">
+                    <span id="modalIcon" class="text-3xl">📦</span>
+                    <h3 id="modalTitle" class="text-xl md:text-2xl font-bold text-blue-400">ชื่อหมวดหมู่</h3>
+                </div>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body (รายการสินค้า Scroll ได้) -->
+            <div class="p-4 overflow-y-auto flex-grow custom-scrollbar">
+                <div id="modalItemList" class="space-y-2">
+                    <!-- รายการสินค้าจะถูกสร้างที่นี่ด้วย JavaScript -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-gray-700 bg-gray-800/30 flex justify-end">
+                <button onclick="closeModal()" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition font-medium">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🧠 JAVASCRIPT (สมองประมวลผลป๊อปอัป) 🧠 -->
+    <script>
+        // 1. ฐานข้อมูลจำลอง (ดึงจากภาพ 3 ใบของบอสเทพอภัย)
+        const categoryData = {
+            'รายการโคมไฟ': { icon: '💡', items: ['Moving Beam F-580', 'Moving Beam T-580 TUNA', 'Moving Beam ip650F', 'BSW Moving Beam K600', 'BSWF Moving Beam XT800', 'Beam 80W / ไฟพาร์', 'Tilt Strobe 1200W', 'Strobe LED 1000W', 'Strobe LED 200W', 'Strobe MB-H001', 'Bar Dot / AM-F55510', 'Bar Pixell / AM-CP3216', 'Moving Zoom 3715', 'Tilt Bar', 'BEE EYE 1940 / K10', 'BEE EYE 1940 กันน้ำ', 'ไฟสปอร์ตไลท์ 2 หน้า (4 หัว)', 'ไฟสปอร์ตไลท์ 1 หน้า (2 หัว)', 'ไฟสปอร์ตไลท์ COB', 'LED PAR กันน้ำ', 'Super PAR', 'LED PAR 3Wx54 / 3IN1', 'LED PAR 3Wx54 / 4IN1', 'LED PAR 10Wx18 / 4IN1', 'LED PAR 12Wx18 / 6IN1', 'LED PAR 64/1000W'] },
+            'ไฟเลเซอร์ + CO2': { icon: '💨', items: ['เลเซอร์ เขียว / ออกสี', 'เลเซอร์ 50W สีสันทวีป', 'เลเซอร์ 30W สีสันทวีป', 'เครื่องพ่น CO2'] },
+            'บอร์ดคอนโทรลไฟ+บูทเตอร์': { icon: '🎛️', items: ['บอร์ดคอนโทรล MA2, NPU, Grand MA3', 'บอร์ดสไลด์ MA / ปีก, DMX Mixer 36', 'บูทเตอร์ AM-SP8 ตัวเล็ก', 'บูทเตอร์ PM2 / DMX Splitter 4CH, RDM8402J / DMX Splitter 4', 'บูทเตอร์ DMX 4 ช่อง, RDM DMX512', 'ตู้ DIMMER 6K. 12 CH.'] },
+            'สายสัญญาณไฟ': { icon: '🔌', items: ['สายสัญญาณลิงค์ (3ม., 5ม., 10ม., 20ม., LED PAR กันน้ำ 3ม.)', 'พ่วงไฟ (จั้ม Y, ปลั๊ก Y-2 ตา 16A, ปลั๊ก Y-4 ตา 16A, ปลั๊กผู้-เมีย 5ม./10ม.)'] },
+            'สายไฟ': { icon: '⚡', items: ['สายไฟเมน 16A/32A (10ม., 20ม., 25ม.), พาวเวอร์คอน 5ม., สาย LED PAR กันน้ำ 3ม.'] },
+            'หมวก+แขนโคมไฟ': { icon: '🏗️', items: ['หมวก (สวม/กลาง/ใหญ่, หมวก Moving Bar, แขนสวม)'] },
+            'ลำโพง': { icon: '🔊', items: ['ลำโพง NEXO: M46, B112, S118/SUB, GEO M1220, GEO M1210, RS18, PS15 UR, STM M28, STM 118', 'ลำโพง RCF & Admark: RCF ART 310A, Admark AD-L5A, AD-728C/SUB, AD-321A/SUB', 'ลำโพง ICE: ICE SUB 218, ICE SUB 18 นิ้ว (RS18, RS28, LS18), ICE LINE ARRAY 212, ICE PA 10 นิ้ว/V8', 'ลำโพง Active: Active 12 นิ้ว/FPJ 12AD, Active 15 นิ้ว/FPJ 15AD'] },
+            'เพาเวอร์แอมป์': { icon: '🔋', items: ['เพาเวอร์ NEXO', 'เพาเวอร์ ICE PROSOUND/PA', 'เพาเวอร์ ICE PROSOUND/SUB'] },
+            'มิกซ์+คอนโทรล': { icon: '🎚️', items: ['Mixers: DIGICO X-SD08, Midas M32 Live, YAMAHA DM7, YAMAHA MG12XU, YAMAHA DM3', 'Stage Boxes: DIGICO, Midas DL32, YAMAHA Rio3224-D2', 'Controllers: ชุดคอนโทรล Admark DX428, คอนโทรล LAKE LMX88, คอนโทรล Marani MIR-260E', 'ชุดกล่องรับ MRT MADI แร็ค, กล่อง DI BOX'] },
+            'สายไฟ+สายสัญญาณ+ตู้ไฟ': { icon: '🔌', items: ['สายไฟ+สายสัญญาณ+พ่วง (ลำโพง 4/8 คอร์, สายสัญญาณ XLR 4/8/12 คอร์, ตู้ไฟ, โหลด, นั่งร้าน, รอกกว้าน)'] },
+            'แร็คอุปกรณ์': { icon: '🗄️', items: ['อุปกรณ์เสริม (อุปกรณ์แขวนลำโพงทอง/แดง/ดำ/เงิน, Fly Bar แขวนลำโพง NEXO/Admark/J8/V8/LS18)'] },
+            'ชุดไมโครโฟน+เครื่องควบคุม+ขาไมค์': { icon: '🎤', items: ['ชุดไมค์ลอย+เครื่องรับสัญญาณ+หูฟัง (Wireless Intercom, Sound Vision, SHURE SM58/SM57, ขาตั้งไมค์ใหญ่/Baby Boom/ไมค์กลอง, ขาตั้งลำโพง)'] },
+            'รายการ Truss': { icon: '⛩️', items: ['Truss 1ม., 2ม., 3ม., 3ม.(40cm) (กล่อง: มีสลัก/จอยท์)', 'ตอม่อ (ดำ/เงิน), แป้นหน้าแปลน (1ม./2ม.), ข้อต่อ, ลูกเต๋า, สลัก+พิน, แขนยื่นกล่อง, ผ้าใบหุ้มท่อ, ผ้าใบหุ้มตอม่อ'] },
+            'รายการรอกไฟฟ้า': { icon: '⛓️', items: ['รอกไฟฟ้า 1T x 20M, 2T x 36M', 'ตู้คอนโทรลรอกไฟฟ้า HGK-G-4, HGK-G-8, HGK-G-16'] },
+            'รายการนั่งร้านลิ่มล็อค': { icon: '🪜', items: ['เสา 1ม., เสา 2ม., แขน 2ม., ทะแยง 2.40ม., แผ่นทางเดิน 2ม., ขาปรับ 50cm, บันได, ยูเฮด'] },
+            'รายการเวที': { icon: '🎭', items: ['แผ่นพื้นเวที (120*240mm, 120*120mm)', 'ขาเวที (เหล็ก/มิเนียม ขาดำเงา), ขาเวที (1.20-1.80m, 0.80-1.40m, 0.60-0.80m), ขาปรับ, บันไดเวที'] },
+            'รายการเมการูฟ': { icon: '⛺', items: ['คาน 5 คอร์ด (5ม./2ม.), เสา (5ม./1.70ม.), ขาเต็นท์ 3.30ม., คานตั้ง (กล่อง/กล่อง)', 'อุปกรณ์ยึด (ผ้าใบหุ้ม, แป้นกลม, ชุดซับกลม, พิน M30, น็อต)', 'อุปกรณ์สลิง/รอก (รอกกว้าน 4T/2T, ชุดสเตย์ กลม/แบน, สเตย์ ดำ/เงิน, ยูเฮด 3 ขนาด)'] }
+        };
+
+        // 2. ฟังก์ชันเปิดป๊อปอัป
+        function openModal(categoryName) {
+            const modal = document.getElementById('itemModal');
+            const modalContent = document.getElementById('modalContent');
+            const title = document.getElementById('modalTitle');
+            const icon = document.getElementById('modalIcon');
+            const itemList = document.getElementById('modalItemList');
+            
+            // ดึงข้อมูล
+            const data = categoryData[categoryName] || { icon: '📦', items: ['ไม่พบรายการสินค้าในหมวดหมู่นี้'] };
+            
+            title.textContent = categoryName;
+            icon.textContent = data.icon;
+            
+            // สร้างรายการ HTML
+            itemList.innerHTML = data.items.map(item => `
+                <div class="flex items-center justify-between p-3 bg-gray-800/40 rounded border border-gray-700/50 hover:bg-blue-900/30 hover:border-blue-500/50 transition cursor-pointer group">
+                    <span class="text-gray-200 group-hover:text-blue-300">` + item + `</span>
+                    <button onclick="addToCart('` + item + `')" class="bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white px-3 py-1 rounded text-sm transition shadow hover:shadow-blue-500/50">
+                        + เลือก
+                    </button>
+                </div>
+            `).join('');
+
+            // แสดง Modal
+            modal.classList.remove('hidden');
+            // Effect เฟดอิน
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        // 3. ฟังก์ชันปิดป๊อปอัป
+        function closeModal() {
+            const modal = document.getElementById('itemModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            // Effect เฟดเอาท์
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // รอ effect จบ 300ms
+        }
+
+        // 4. ปิดเมื่อคลิกพื้นที่ว่างรอบๆ (Backdrop)
+        document.getElementById('itemModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // ==========================================
+        // 🛒 CART JAVASCRIPT LOGIC (ระบบตะกร้าเบิก)
+        // ==========================================
+        let cart = []; // Array เก็บรายการที่เลือก
+
+        // 1. เพิ่มลงตะกร้า
+        function addToCart(itemName) {
+            // ตรวจสอบว่ามีของในตะกร้าแล้วหรือยัง ถ้ามีให้บวกจำนวน ถ้าไม่มีให้เพิ่มใหม่
+            const existingItem = cart.find(item => item.name === itemName);
+            if (existingItem) {
+                existingItem.qty += 1;
+            } else {
+                cart.push({ name: itemName, qty: 1 });
+            }
+            
+            // แสดง Effect ปุ่มกระพริบ (Feedback)
+            const floatingBtn = document.getElementById('floatingCartBtn');
+            floatingBtn.classList.add('scale-125', 'bg-green-500');
+            setTimeout(() => {
+                floatingBtn.classList.remove('scale-125', 'bg-green-500');
+            }, 300);
+
+            updateCartUI();
+        }
+
+        // 2. อัปเดต UI หน้าจอ
+        function updateCartUI() {
+            const badge = document.getElementById('cartCountBadge');
+            const totalItemsSpan = document.getElementById('cartTotalItems');
+            const cartList = document.getElementById('cartItemList');
+            
+            // นับจำนวนชิ้นรวมทั้งหมด
+            const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+            
+            // อัปเดตตัวเลขบนตะกร้าลอย
+            badge.textContent = totalQty;
+            if (totalQty > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // อัปเดตตัวเลขใน Modal
+            totalItemsSpan.textContent = totalQty + " รายการ";
+
+            // สร้างรายการในตะกร้า
+            if (cart.length === 0) {
+                cartList.innerHTML = `
+                    <div class="text-center text-gray-500 py-10">
+                        <div class="text-5xl mb-3 opacity-50">📦</div>
+                        <p>ยังไม่มีรายการเบิกอุปกรณ์</p>
+                        <p class="text-sm mt-1">กรุณากด "+ เลือก" จากหมวดหมู่สินค้า</p>
+                    </div>
+                `;
+            } else {
+                cartList.innerHTML = cart.map((item, index) => `
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-800/80 rounded-lg border border-gray-700 hover:border-blue-500/50 transition gap-3">
+                        <div class="flex-grow">
+                            <h4 class="text-gray-200 font-medium">${item.name}</h4>
+                        </div>
+                        <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+                            <div class="flex items-center space-x-2 bg-gray-900 rounded-lg p-1 border border-gray-700">
+                                <button onclick="decreaseQty(${index})" class="w-8 h-8 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center transition">-</button>
+                                <span class="w-8 text-center text-white font-bold">${item.qty}</span>
+                                <button onclick="increaseQty(${index})" class="w-8 h-8 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center transition">+</button>
+                            </div>
+                            <button onclick="removeFromCart(${index})" class="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded transition" title="ลบรายการนี้">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 3. ลดจำนวน
+        function decreaseQty(index) {
+            if (cart[index].qty > 1) {
+                cart[index].qty -= 1;
+            } else {
+                cart.splice(index, 1); // ลบออกถ้าเหลือน้อยกว่า 1
+            }
+            updateCartUI();
+        }
+
+        // 4. เพิ่มจำนวน
+        function increaseQty(index) {
+            cart[index].qty += 1;
+            updateCartUI();
+        }
+
+        // 5. ลบออกจากตะกร้า
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        // 6. ล้างตะกร้าทั้งหมด
+        function clearCart() {
+            if(confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างตะกร้าทั้งหมด?')) {
+                cart = [];
+                updateCartUI();
+                closeCartModal();
+            }
+        }
+
+        // ดึงข้อมูลพนักงานจาก Firebase มาใส่ Datalist ในตะกร้าเบิก
+        async function loadStaffListForCart() {
+            try {
+                const snapshot = await db.collection('staff').orderBy('name').get();
+                if (snapshot.empty) return;
+                
+                let optionsHtml = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    optionsHtml += `<option value="${data.name}">\n`;
+                });
+                
+                const staffList = document.getElementById('dynamicStaffList');
+                if (staffList) {
+                    staffList.innerHTML = optionsHtml;
+                }
+            } catch (error) {
+                console.error("Error loading staff for cart datalist:", error);
+            }
+        }
+
+        // 7. เปิดป๊อปอัปตะกร้า
+        function openCartModal() {
+            const modal = document.getElementById('cartModal');
+            const modalContent = document.getElementById('cartModalContent');
+            updateCartUI();
+            loadStaffListForCart(); // เรียกฟังก์ชันดึงชื่อพนักงานทุกครั้งที่เปิดตะกร้า
+            
+            modal.classList.remove('hidden');
+            // สำคัญ! เปลี่ยนเป็น flex เพื่อให้ slide-over ชิดขวา
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('translate-x-full');
+                modalContent.classList.add('translate-x-0');
+            }, 10);
+        }
+
+        // 8. ปิดป๊อปอัปตะกร้า
+        function closeCartModal() {
+            const modal = document.getElementById('cartModal');
+            const modalContent = document.getElementById('cartModalContent');
+            
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('translate-x-0');
+            modalContent.classList.add('translate-x-full');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex'); // ลบ flex ออกเมื่อซ่อน
+                // รีเซ็ตสถานะการแก้ไขเมื่อปิดตะกร้า
+                if (typeof currentEditingDocId !== 'undefined') {
+                    currentEditingDocId = null; 
+                }
+            }, 300);
+        }
+
+        // 9. ปิดเมื่อคลิกพื้นที่ว่างของตะกร้า
+        document.getElementById('cartModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCartModal();
+            }
+        });
+
+        // ==========================================
+        // 🧠 สมองส่วนความจำ: Master Data (Mockup Database รอเชื่อม Firebase)
+        // ==========================================
+        const masterTechData = {
+            "T01": { fullName: "นายเอกชัย มั่นคง", role: "หัวหน้าช่าง (Supervisor)" },
+            "T02": { fullName: "นายอาร์ม แข็งขัน", role: "ช่างเทคนิค (Technician)" },
+            "T03": { fullName: "นายบอย ใจดี", role: "ช่างเทคนิค (Technician)" },
+            "A01": { fullName: "นางสาวสมศรี ดูแล", role: "ผู้ดูแลระบบ (Admin)" }
+        };
+
+        const masterJobData = {
+            "J01": { address: "โรงแรมดุสิตธานี ห้องบอลรูม ชั้น 2", contact: "คุณวิภา 081-111-2222", sale: "เทพอภัย (บอส)" },
+            "J02": { address: "ลานกิจกรรมหน้าเซ็นทรัลเวิลด์", contact: "คุณบาส 082-333-4444", sale: "เทพอภัย (บอส)" },
+            "J03": { address: "พารากอนฮอลล์", contact: "คุณแนน 083-555-6666", sale: "ฝ่ายขาย A" }
+        };
+
+        // ตัวแปรเก็บข้อมูลที่ถูกดึงมา (เตรียมส่งเข้า Firebase)
+        let populatedData = {
+            techFullName: "", techRole: "",
+            jobAddress: "", jobContact: "", jobSale: ""
+        };
+
+        // ฟังก์ชันอัปเดต Info Card
+        function checkAutoPopulate() {
+            const techInput = document.getElementById('techName').value.trim();
+            const jobInput = document.getElementById('jobSite').value.trim();
+            
+            // สกัดหารหัส (เช่น T01, J01) จากข้อความที่พิมพ์
+            const techIdMatch = techInput.match(/^[A-Z0-9]{3}/i); 
+            const jobIdMatch = jobInput.match(/^[A-Z0-9]{3}/i);
+
+            let hasTechData = false;
+            let hasJobData = false;
+
+            // ตรวจสอบข้อมูลพนักงาน
+            if (techIdMatch && masterTechData[techIdMatch[0].toUpperCase()]) {
+                const data = masterTechData[techIdMatch[0].toUpperCase()];
+                document.getElementById('infoTechFullName').textContent = data.fullName;
+                document.getElementById('infoTechRole').textContent = data.role;
+                populatedData.techFullName = data.fullName;
+                populatedData.techRole = data.role;
+                hasTechData = true;
+            } else {
+                document.getElementById('infoTechFullName').textContent = "-";
+                document.getElementById('infoTechRole').textContent = "-";
+                populatedData.techFullName = "";
+                populatedData.techRole = "";
+            }
+
+            // ตรวจสอบข้อมูลไซต์งาน
+            if (jobIdMatch && masterJobData[jobIdMatch[0].toUpperCase()]) {
+                const data = masterJobData[jobIdMatch[0].toUpperCase()];
+                document.getElementById('infoJobAddress').textContent = data.address;
+                document.getElementById('infoJobContact').textContent = data.contact;
+                document.getElementById('infoJobSale').textContent = data.sale;
+                populatedData.jobAddress = data.address;
+                populatedData.jobContact = data.contact;
+                populatedData.jobSale = data.sale;
+                hasJobData = true;
+            } else {
+                document.getElementById('infoJobAddress').textContent = "-";
+                document.getElementById('infoJobContact').textContent = "-";
+                document.getElementById('infoJobSale').textContent = "-";
+                populatedData.jobAddress = "";
+                populatedData.jobContact = "";
+                populatedData.jobSale = "";
+            }
+
+            // แสดงกล่องข้อมูลถ้ามีข้อมูลอย่างน้อย 1 อย่าง
+            const infoCard = document.getElementById('autoPopulateInfo');
+            if (hasTechData || hasJobData) {
+                infoCard.classList.remove('hidden');
+            } else {
+                infoCard.classList.add('hidden');
+            }
+        }
+
+        // ดักจับการพิมพ์เพื่อแสดงผล Auto-Populate ทันที
+        document.getElementById('techName').addEventListener('input', checkAutoPopulate);
+        document.getElementById('jobSite').addEventListener('input', checkAutoPopulate);
+
+        // ==========================================
+        
+        // 9.5 ฟังก์ชันพิมพ์ใบเบิก/ยืม A4 (สากล)
+        function printRequisitionA4(data, items) {
+            const printWindow = window.open('', '_blank', 'width=900,height=1200');
+            const dateStr = new Date().toLocaleString('th-TH');
+            
+            // วนลูปสร้างแถวตาราง
+            let tableRows = '';
+            items.forEach((item, index) => {
+                tableRows += `
+                    <tr>
+                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">${index + 1}</td>
+                        <td style="border: 1px solid #333; padding: 8px;">${item.name}</td>
+                        <td style="border: 1px solid #333; padding: 8px; text-align: right; padding-right: 15px;">${item.qty} ${item.unit || 'ชิ้น'}</td>
+                        <td style="border: 1px solid #333; padding: 8px;"></td>
+                    </tr>
+                `;
+            });
+
+            // สร้างโครงร่าง A4 (HTML)
+            const htmlContent = `
+                <html>
+                <head>
+                    <title>ใบเบิก-ยืมอุปกรณ์</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+                        @page { size: A4 landscape; margin: 10mm; }
+                        body { 
+                            font-family: 'Sarabun', sans-serif; 
+                            padding: 20px; 
+                            color: #000; 
+                            background-color: #fff;
+                        }
+                        .container {
+                            max-width: 210mm;
+                            margin: 0 auto;
+                        }
+                        .header-container {
+                            display: flex;
+                            align-items: flex-start;
+                            border-bottom: 2px solid #000;
+                            padding-bottom: 15px;
+                            margin-bottom: 20px;
+                        }
+                        .header-text {
+                            flex-grow: 1;
+                            text-align: center;
+                        }
+                        .company-name {
+                            font-size: 26px;
+                            font-weight: bold;
+                            margin: 0;
+                            color: #000;
+                        }
+                        .doc-title {
+                            font-size: 22px;
+                            font-weight: bold;
+                            margin-top: 5px;
+                            background-color: #f3f4f6;
+                            display: inline-block;
+                            padding: 5px 20px;
+                            border-radius: 5px;
+                            border: 1px solid #ccc;
+                        }
+                        .info-grid { 
+                            display: flex; 
+                            justify-content: space-between; 
+                            margin-bottom: 25px; 
+                            font-size: 15px;
+                            line-height: 1.6;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-bottom: 40px; 
+                            font-size: 15px;
+                        }
+                        th { 
+                            background-color: #e5e7eb; 
+                            border: 1px solid #333; 
+                            padding: 10px; 
+                            font-weight: 600;
+                        }
+                        .signatures { 
+                            display: flex; 
+                            justify-content: space-between; 
+                            margin-top: 50px; 
+                            text-align: center; 
+                            font-size: 14px;
+                        }
+                        .sig-box { 
+                            width: 30%; 
+                        }
+                        .sig-line { 
+                            border-bottom: 1px dashed #000; 
+                            margin-bottom: 5px; 
+                            height: 40px; 
+                        }
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; }
+                            @page { margin: 5mm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header-container">
+                            <div class="header-text">
+                                <h1 class="company-name">ICE PRO SOUND & LIGHTING</h1>
+                                <div class="doc-title">ใบเบิก / ใบยืมอุปกรณ์</div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-grid">
+                            <div>
+                                <div><strong>ผู้รับงาน :</strong> ${data.techName}</div>
+                            </div>
+                            <div>
+                                <div><strong>วันที่ทำรายการ:</strong> ${dateStr}</div>
+                                <div><strong>ไซต์งาน:</strong> ${data.jobSite}</div>
+                            </div>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th width="10%">ลำดับ</th>
+                                    <th width="60%">รายการอุปกรณ์</th>
+                                    <th width="10%">จำนวน</th>
+                                    <th width="20%">หมายเหตุ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+
+                        <div class="signatures">
+                            <div class="sig-box">
+                                <div class="sig-line"></div>
+                                <p>( ${data.techName || '.............................................'} )</p>
+                                <p><strong>ผู้เบิก / ผู้ยืม</strong></p>
+                            </div>
+                            <div class="sig-box">
+                                <div class="sig-line"></div>
+                                <p>( ${data.approverName || '.............................................'} )</p>
+                                <p><strong>ผู้อนุมัติ</strong></p>
+                            </div>
+                            <div class="sig-box">
+                                <div class="sig-line"></div>
+                                <p>( ${data.issuerName || '.............................................'} )</p>
+                                <p><strong>ผู้ให้เบิก / ผู้จ่ายสินค้า</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            // หน่วงเวลาให้ Font โหลดเสร็จแล้วสั่งพิมพ์
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 800);
+        }
+
+        // ==========================================
+        
+        let currentEditingDocId = null;
+
+        // 10.1 ฟังก์ชันลบใบเบิก
+        async function deleteRequisition(docId) {
+            if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบใบเบิกนี้? ข้อมูลจะถูกลบถาวร!')) {
+                try {
+                    await db.collection('requisitions').doc(docId).delete();
+                    alert('✅ ลบข้อมูลสำเร็จ!');
+                    loadReportData(); // โหลดหน้าตารางใหม่
+                } catch (error) {
+                    console.error("Error deleting document: ", error);
+                    alert('❌ ลบข้อมูลไม่สำเร็จ: ' + error.message);
+                }
+            }
+        }
+
+        // 10.1.5 สั่งพิมพ์รายงานจากตาราง (ดึงจาก Firebase แล้วส่งไป A4 แนวนอน)
+        async function printRequisition(docId) {
+            try {
+                const doc = await db.collection('requisitions').doc(docId).get();
+                if (!doc.exists) {
+                    alert('❌ ไม่พบข้อมูลใบเบิกนี้');
+                    return;
+                }
+                const data = doc.data();
+                const items = data.items || [];
+                printRequisitionA4(data, items);
+            } catch (error) {
+                console.error("Error fetching for print: ", error);
+                alert('❌ เกิดข้อผิดพลาดในการดึงข้อมูลมาพิมพ์: ' + error.message);
+            }
+        }
+
+        // 10.2 ฟังก์ชันดึงข้อมูลมาแก้ไข
+        async function editRequisition(docId) {
+            try {
+                const doc = await db.collection('requisitions').doc(docId).get();
+                if (!doc.exists) {
+                    alert('❌ ไม่พบข้อมูลใบเบิกนี้');
+                    return;
+                }
+
+                const data = doc.data();
+                
+                // 1. นำข้อมูลใส่ตะกร้า
+                cart = data.items || [];
+                updateCartUI();
+
+                // 2. นำข้อมูลกลับไปใส่ฟอร์ม
+                document.getElementById('techName').value = data.techName || '';
+                document.getElementById('techPin').value = data.techAuthPin || '';
+                document.getElementById('jobSite').value = data.jobSite || '';
+                document.getElementById('approverName').value = data.approverName || '';
+                document.getElementById('issuerName').value = data.issuerName || '';
+
+                // ดึงข้อมูลตัวแปร Auto populate
+                populatedData = {
+                    techFullName: data.techFullName,
+                    techRole: data.techRole,
+                    jobAddress: data.jobAddress,
+                    jobContact: data.jobContact,
+                    jobSale: data.jobSale
+                };
+
+                // แสดง Info Card
+                document.getElementById('autoPopulateInfo').classList.remove('hidden');
+                document.getElementById('infoTechFullName').textContent = data.techFullName || '-';
+                document.getElementById('infoJobAddress').textContent = data.jobAddress || '-';
+                
+                // จำ ID ที่กำลังแก้ไข
+                currentEditingDocId = docId;
+                
+                // เปิดตะกร้าเพื่อให้แก้ไข
+                openCartModal();
+
+            } catch (error) {
+                console.error("Error editing document: ", error);
+                alert('❌ เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message);
+            }
+        }
+
+        // ==========================================
+        // 10. ระบบบันทึกข้อมูลลง Firebase (Firestore)
+        async function saveToFirebase() {
+            const techName = document.getElementById('techName').value.trim();
+            const techPin = document.getElementById('techPin').value.trim();
+            const jobSite = document.getElementById('jobSite').value.trim();
+            const approverName = document.getElementById('approverName').value.trim();
+            const issuerName = document.getElementById('issuerName').value.trim();
+            
+            // Validate: ตรวจสอบว่ามีของในตะกร้าไหม
+            if (cart.length === 0) {
+                alert('⚠️ ตะกร้าว่างเปล่า! กรุณาเลือกอุปกรณ์ก่อนบันทึกใบเบิก');
+                return;
+            }
+
+            // Validate: ตรวจสอบการกรอกข้อมูลครบ 5 ช่อง
+            if (!techName || !techPin || !jobSite || !approverName || !issuerName) {
+                alert('⚠️ กรุณากรอก "ชื่อผู้เบิก", "รหัสผ่าน (PIN)", "ไซต์งาน", "ผู้อนุมัติ" และ "ผู้ให้เบิก/ยืม" ให้ครบถ้วน');
+                return;
+            }
+
+            // เปลี่ยนสถานะปุ่มเป็นกำลังโหลด
+            const btnText = document.getElementById('saveBtnText');
+            const spinner = document.getElementById('saveSpinner');
+            btnText.textContent = 'กำลังบันทึก...';
+            spinner.classList.remove('hidden');
+
+            try {
+                // สร้างข้อมูลสำหรับบันทึก (แพ็คข้อมูล Auto-Populate เข้าไปด้วย)
+                const requisitionData = {
+                    techName: techName,
+                    techAuthPin: techPin, 
+                    techFullName: populatedData.techFullName || "ระบุเอง",
+                    techRole: populatedData.techRole || "ระบุเอง",
+                    
+                    approverName: approverName,
+                    issuerName: issuerName,
+                    
+                    jobSite: jobSite,
+                    jobAddress: populatedData.jobAddress || "ระบุเอง",
+                    jobContact: populatedData.jobContact || "ระบุเอง",
+                    jobSale: populatedData.jobSale || "ระบุเอง",
+
+                    items: cart,
+                    totalItems: cart.reduce((sum, item) => sum + item.qty, 0),
+                    status: 'pending', // รอดำเนินการ
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // บันทึกลง Collection 'requisitions'
+                if (currentEditingDocId) {
+                    await db.collection('requisitions').doc(currentEditingDocId).update(requisitionData);
+                    alert(`✅ แก้ไขใบเบิกสำเร็จ!\n\nผู้เบิก: ${techName}\nผู้อนุมัติ: ${approverName}\nไซต์งาน: ${requisitionData.jobSite}`);
+                    currentEditingDocId = null; // รีเซ็ตสถานะ
+                } else {
+                    requisitionData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('requisitions').add(requisitionData);
+                    alert(`✅ บันทึกใบเบิกสำเร็จ!\n\nผู้เบิก: ${techName}\nผู้อนุมัติ: ${approverName}\nไซต์งาน: ${requisitionData.jobSite}`);
+                }
+                
+                // รีเฟรชตารางถ้าย้ายไปหน้า Dashboard/Report แล้ว (เผื่อมีการแก้ไขแล้วปิด modal)
+                if(!document.getElementById('reportSection').classList.contains('hidden')){
+                    loadReportData();
+                }
+
+                // สั่งพิมพ์บิล A4 ทันที
+                printRequisitionA4(requisitionData, cart);
+                cart = [];
+                document.getElementById('techName').value = '';
+                document.getElementById('techPin').value = '';
+                document.getElementById('jobSite').value = '';
+                document.getElementById('approverName').value = '';
+                document.getElementById('issuerName').value = '';
+                document.getElementById('autoPopulateInfo').classList.add('hidden'); // ซ่อน Info Card
+                updateCartUI();
+                closeCartModal();
+
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert('❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error.message);
+            } finally {
+                // คืนค่าปุ่มกลับมาเหมือนเดิม
+                btnText.textContent = 'บันทึกใบเบิกและยืม 📝';
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // 📊 ระบบ Dashboard และ Navigation
+        // ==========================================
+        function showDashboard() {
+            document.getElementById('storeSection').classList.add('hidden');
+            document.getElementById('staffSection').classList.add('hidden');
+            document.getElementById('reportSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+        }
+
+        function showReport() {
+            document.getElementById('storeSection').classList.add('hidden');
+            document.getElementById('staffSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('inventorySection').classList.add('hidden');
+            document.getElementById('reportSection').classList.remove('hidden');
+            loadReportData(); // โหลดข้อมูลลงตารางรายงาน
+        }
+
+        function showInventory() {
+            document.getElementById('storeSection').classList.add('hidden');
+            document.getElementById('staffSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('reportSection').classList.add('hidden');
+            document.getElementById('inventorySection').classList.remove('hidden');
+            loadInventoryData(); 
+        }
+
+        function showStore() {
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('staffSection').classList.add('hidden');
+            document.getElementById('reportSection').classList.add('hidden');
+            document.getElementById('inventorySection').classList.add('hidden');
+            document.getElementById('storeSection').classList.remove('hidden');
+        }
+
+        function showStaff() {
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('storeSection').classList.add('hidden');
+            document.getElementById('reportSection').classList.add('hidden');
+            document.getElementById('inventorySection').classList.add('hidden');
+            document.getElementById('staffSection').classList.remove('hidden');
+            loadStaffData(); // เรียกฟังก์ชันโหลดข้อมูลพนักงาน (จะสร้างด้านล่าง)
+        }
+
+        async function loadReportData() {
+            const tableBody = document.getElementById('reportTableBody');
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400"><div class="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>กำลังดึงข้อมูล...</td></tr>';
+
+            try {
+                // ดึงข้อมูลจาก Firebase เรียงตามวันที่ล่าสุด
+                const snapshot = await db.collection('requisitions').orderBy('createdAt', 'desc').limit(20).get();
+                
+                if (snapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-500">ย้งไม่มีข้อมูลการเบิกของ</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    // แปลง Timestamp เป็นเวลาที่อ่านได้
+                    const dateObj = data.createdAt ? data.createdAt.toDate() : new Date();
+                    const dateStr = dateObj.toLocaleDateString('th-TH') + ' ' + dateObj.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+                    
+                    const statusBadge = data.status === 'pending' 
+                        ? '<span class="px-2 py-1 bg-yellow-900/50 text-yellow-400 text-xs rounded border border-yellow-700">รอดำเนินการ</span>'
+                        : '<span class="px-2 py-1 bg-green-900/50 text-green-400 text-xs rounded border border-green-700">เสร็จสิ้น</span>';
+
+                    html += `
+                        <tr class="hover:bg-slate-700/50 transition whitespace-nowrap">
+                            <td class="px-6 py-4 text-slate-300">${dateStr}</td>
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-[15px] text-blue-300">${data.techName}</div>
+                                <div class="text-[13px] text-slate-400">${data.techFullName}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-[15px] text-white">${data.jobSite}</div>
+                                <div class="text-[13px] text-slate-400">${data.jobAddress.substring(0, 30)}...</div>
+                            </td>
+                            <td class="px-6 py-4 text-[15px] text-slate-300">${data.jobSale}</td>
+                            <td class="px-6 py-4 text-center text-lg font-bold text-white">${data.totalItems}</td>
+                            <td class="px-6 py-4 text-center">${statusBadge}</td>
+                            <td class="px-6 py-4 text-center space-x-2">
+                                <button onclick="printRequisition('${doc.id}')" class="text-blue-400 hover:text-blue-200 transition text-lg" title="พิมพ์ใบเบิก">🖨️</button>
+                                <button onclick="editRequisition('${doc.id}')" class="text-yellow-400 hover:text-yellow-200 transition text-lg" title="แก้ไขใบเบิก">✏️</button>
+                                <button onclick="deleteRequisition('${doc.id}')" class="text-red-400 hover:text-red-200 transition text-lg" title="ลบใบเบิก">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tableBody.innerHTML = html;
+
+            } catch (error) {
+                console.error("Error fetching dashboard data: ", error);
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-red-500">❌ เกิดข้อผิดพลาด: ${error.message}</td></tr>`;
+            }
+        }
+
+        // --- Dropdown Menu Logic ---
+        function toggleSettingsMenu() {
+            const dropdown = document.getElementById('settingsDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+        
+        function toggleSettingsMenuMobile() {
+            const dropdownMobile = document.getElementById('settingsDropdownMobile');
+            if(dropdownMobile) {
+                dropdownMobile.classList.toggle('hidden');
+            }
+        }
+
+        // ปิด Dropdown เมื่อคลิกที่อื่น (Close on outside click)
+        window.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('settingsDropdown');
+            const toggleButton = e.target.closest('button[onclick="toggleSettingsMenu()"]');
+            
+            // ถ้าไม่ได้คลิกที่ปุ่มเปิด และไม่ได้คลิกใน dropdown ให้ปิด
+            if (!toggleButton && !e.target.closest('#settingsDropdown')) {
+                if (dropdown && !dropdown.classList.contains('hidden')) {
+                    dropdown.classList.add('hidden');
+                }
+            }
+            
+            // สำหรับ Mobile Dropdown
+            const dropdownMobile = document.getElementById('settingsDropdownMobile');
+            const toggleButtonMobile = e.target.closest('button[onclick="toggleSettingsMenuMobile()"]');
+            
+            if (!toggleButtonMobile && !e.target.closest('#settingsDropdownMobile')) {
+                if (dropdownMobile && !dropdownMobile.classList.contains('hidden')) {
+                    dropdownMobile.classList.add('hidden');
+                }
+            }
+        });
+
+        // ==========================================
+        // 👥 ระบบตั้งค่าพนักงาน (Staff Management)
+        // ==========================================
+        async function loadStaffData() {
+            const tableBody = document.getElementById('staffTableBody');
+            if(!tableBody) return; // ป้องกัน error ถ้ายังไม่มี html
+            
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-gray-400"><div class="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>กำลังดึงข้อมูล...</td></tr>';
+
+            try {
+                // ดึงข้อมูลพนักงานทั้งหมด
+                const snapshot = await db.collection('staff').orderBy('name').get();
+                
+                if (snapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-gray-500">ย้งไม่มีรายชื่อพนักงาน</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const row = `
+                        <tr class="border-b border-gray-700/50 hover:bg-gray-800/50 transition">
+                            <td class="px-6 py-4 font-medium text-white">${data.name || '-'}</td>
+                            <td class="px-6 py-4"><span class="bg-gray-700 text-gray-200 px-3 py-1 rounded-full text-xs">${data.role || '-'}</span></td>
+                            <td class="px-6 py-4 text-gray-300">
+                                <div class="flex items-center gap-1">📞 ${data.phone || '-'}</div>
+                                <div class="text-green-400 text-xs mt-1 flex items-center gap-1">💬 ${data.lineId || '-'}</div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-400 text-sm max-w-[200px] truncate print:max-w-none print:whitespace-normal" title="${data.address || '-'}">${data.address || '-'}</td>
+                            <td class="px-6 py-4 text-center whitespace-nowrap no-print">
+                                <button onclick="editStaff('${doc.id}', '${data.name}', '${data.role}', '${data.phone}', '${data.lineId || ''}', '${(data.address || '').replace(/'/g, "\\'").replace(/\r?\n/g, '\\n')}')" class="text-yellow-400 hover:text-yellow-300 bg-yellow-400/10 hover:bg-yellow-400/20 px-3 py-1 rounded transition text-sm mr-2">
+                                    ✏️ แก้ไข
+                                </button>
+                                <button onclick="deleteStaff('${doc.id}')" class="text-red-400 hover:text-red-300 bg-red-400/10 hover:bg-red-400/20 px-3 py-1 rounded transition text-sm">
+                                    🗑️ ลบ
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (error) {
+                console.error("Error loading staff: ", error);
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-red-500">❌ เกิดข้อผิดพลาด: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function addStaff(event) {
+            event.preventDefault(); // ป้องกันฟอร์มรีเฟรชหน้า
+            
+            const btnText = document.getElementById('addStaffBtnText');
+            const spinner = document.getElementById('addStaffSpinner');
+            
+            const id = document.getElementById('editStaffId').value;
+            const name = document.getElementById('newStaffName').value.trim();
+            const role = document.getElementById('newStaffRole').value;
+            const phone = document.getElementById('newStaffPhone').value.trim();
+            const lineId = document.getElementById('newStaffLine').value.trim();
+            const address = document.getElementById('newStaffAddress').value.trim();
+
+            if (!name) {
+                alert('กรุณากรอกชื่อพนักงาน');
+                return;
+            }
+
+            // แสดงโหลดดิ่ง
+            btnText.textContent = 'กำลังบันทึก...';
+            spinner.classList.remove('hidden');
+
+            try {
+                if (id) {
+                    // อัพเดทข้อมูลพนักงาน
+                    await db.collection('staff').doc(id).update({
+                        name: name,
+                        role: role,
+                        phone: phone,
+                        lineId: lineId,
+                        address: address,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    alert('✅ อัพเดทข้อมูลพนักงานสำเร็จ!');
+                } else {
+                    // เพิ่มพนักงานใหม่
+                    await db.collection('staff').add({
+                        name: name,
+                        role: role,
+                        phone: phone,
+                        lineId: lineId,
+                        address: address,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    alert('✅ เพิ่มพนักงานสำเร็จ!');
+                }
+                
+                // คืนค่าฟอร์มกลับสู่สถานะปกติ
+                cancelEdit();
+                
+                // รีเฟรชตาราง
+                loadStaffData();
+
+            } catch (error) {
+                console.error("Error saving staff: ", error);
+                alert('❌ เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function editStaff(id, name, role, phone, lineId, address) {
+            // นำข้อมูลลงฟอร์ม
+            document.getElementById('editStaffId').value = id;
+            document.getElementById('newStaffName').value = name;
+            document.getElementById('newStaffRole').value = role;
+            document.getElementById('newStaffPhone').value = phone;
+            document.getElementById('newStaffLine').value = lineId || '';
+            document.getElementById('newStaffAddress').value = address ? address.replace(/\\n/g, '\n') : '';
+
+            // เปลี่ยนหน้าตาปุ่มเป็นโหมดแก้ไข
+            document.getElementById('addStaffBtnText').textContent = 'บันทึกการแก้ไข';
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            
+            // เลื่อนจอไปที่ฟอร์ม (สำหรับมือถือ)
+            document.getElementById('addStaffForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            // ล้างข้อมูลฟอร์ม
+            document.getElementById('addStaffForm').reset();
+            document.getElementById('editStaffId').value = '';
+            
+            // เปลี่ยนหน้าตาปุ่มกลับสู่โหมดเพิ่มใหม่
+            document.getElementById('addStaffBtnText').textContent = 'เพิ่มพนักงาน';
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        async function deleteStaff(id) {
+            if(confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบพนักงานคนนี้? (การลบจะไม่ส่งผลต่อประวัติที่เบิกไปแล้ว)')) {
+                try {
+                    await db.collection('staff').doc(id).delete();
+                    loadStaffData(); // รีเฟรชตาราง
+                } catch (error) {
+                    console.error("Error deleting staff: ", error);
+                    alert('❌ ลบข้อมูลไม่สำเร็จ: ' + error.message);
+                }
+            }
+        }
+
+        // ฟังก์ชันกรอง/ค้นหา พนักงาน
+        function filterStaff() {
+            const searchInput = document.getElementById('staffSearchInput').value.toLowerCase();
+            const tableBody = document.getElementById('staffTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                // ข้ามแถวที่แสดงสถานะ "กำลังโหลด" หรือ "ไม่มีข้อมูล" (แถวที่มีแค่ 1 คอลัมน์)
+                if (rows[i].cells.length < 5) continue;
+
+                // ดึงข้อมูลชื่อและเบอร์โทรมาตรวจสอบ
+                const name = rows[i].cells[0].textContent.toLowerCase();
+                const phoneLine = rows[i].cells[2].textContent.toLowerCase();
+
+                // ตรวจสอบว่ามีคำที่ค้นหาอยู่ในชื่อ หรือเบอร์โทร/ไลน์ หรือไม่
+                if (name.includes(searchInput) || phoneLine.includes(searchInput)) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+
+        // ฟังก์ชันสั่งพิมพ์รายงาน
+        // ฟังก์ชันสั่งพิมพ์รายงานพนักงาน
+        // ฟังก์ชันสั่งพิมพ์รายงานพนักงาน
+        function printStaffData() {
+            // ดึงเฉพาะข้อมูลตารางพนักงาน (ค้นหาจากตารางที่มีอยู่ข้างใน staffSection)
+            const staffTable = document.querySelector('#staffSection table');
+            if (!staffTable) {
+                alert("❌ ไม่พบข้อมูลตารางพนักงาน กรุณารีเฟรชและลองใหม่");
+                return;
+            }
+            const tableHTML = staffTable.outerHTML;
+            
+            const date = new Date().toLocaleDateString('th-TH', { 
+                year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute:'2-digit'
+            });
+
+            // สร้างโครงสร้างหน้าสำหรับพิมพ์
+            const printContent = `
+                <html>
+                <head>
+                    <title>รายงานฐานข้อมูลพนักงาน - Ice Prosound</title>
+                    <style>
+                        body { font-family: 'Sarabun', sans-serif; padding: 20px; color: #333; }
+                        h1 { text-align: center; color: #1f2937; margin-bottom: 5px; font-size: 24px; }
+                        .subtitle { text-align: center; color: #6b7280; margin-bottom: 20px; font-size: 14px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+                        th, td { border: 1px solid #d1d5db; padding: 10px; text-align: left; }
+                        th { background-color: #f9fafb; font-weight: bold; }
+                        /* ซ่อนคอลัมน์จัดการตอนปริ้น */
+                        th:last-child, td:last-child { display: none !important; }
+                        .footer { margin-top: 30px; text-align: right; font-size: 12px; color: #6b7280; }
+                    </style>
+                </head>
+                <body>
+                    <h1>รายงานฐานข้อมูลพนักงาน</h1>
+                    <div class="subtitle">บริษัท ไอซ์โปรซาวด์ จำกัด - ข้อมูล ณ วันที่ ${date}</div>
+
+                    ${tableHTML}
+                    
+                    <div class="footer">
+                        ออกรายงานโดยระบบ Ice Prosound POS
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // เปิดหน้าต่างใหม่เพื่อพิมพ์
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            // รอให้โหลดเสร็จแล้วสั่งพิมพ์
+            printWindow.onload = function() {
+                printWindow.print();
+            };
+        }
+
+        // ฟังก์ชันส่งออก Excel (CSV format แบบรองรับภาษาไทย UTF-8)
+        async function exportStaffToExcel() {
+            try {
+                // ดึงข้อมูลพนักงานล่าสุดจาก Firebase
+                const snapshot = await db.collection('staff').orderBy('createdAt', 'desc').get();
+                
+                // กำหนดหัวตาราง (Headers)
+                let csvContent = "\uFEFF"; // เพิ่ม BOM สำหรับรองรับภาษาไทยใน Excel
+                csvContent += "ชื่อ-นามสกุล,ตำแหน่ง,เบอร์โทร,ไอดีไลน์,ที่อยู่\n"; // Headers
+                
+                // วนลูปข้อมูลแล้วต่อสตริง CSV
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    // ป้องกันปัญหาลูกน้ำ (comma) และขึ้นบรรทัดใหม่ในฟิลด์ข้อมูล
+                    const name = `"${data.name || '-'}"`;
+                    const role = `"${data.role || '-'}"`;
+                    const phone = `"${data.phone || '-'}"`;
+                    const lineId = `"${data.lineId || '-'}"`;
+                    // สำหรับที่อยู่ที่มีการเว้นวรรคและ Enter ต้องครอบด้วย Double Quote เสมอ
+                    const address = `"${(data.address || '-').replace(/"/g, '""').replace(/\n/g, " ")}"`; 
+
+                    // ต่อข้อมูลแต่ละแถว
+                    csvContent += `${name},${role},${phone},${lineId},${address}\n`;
+                });
+
+                // สร้างและดาวน์โหลดไฟล์
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute("href", url);
+                link.setAttribute("download", "Staff_Database_IceProsound.csv");
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                console.error("Error exporting to Excel: ", error);
+                alert("❌ เกิดข้อผิดพลาดในการส่งออกไฟล์ Excel");
+            }
+        }
+
+        // ==========================================
+        // 📦 ระบบคลังสินค้า (Inventory Management)
+        // ==========================================
+        function openInventoryModal() {
+            document.getElementById('inventoryForm').reset();
+            document.getElementById('invProductId').value = '';
+            document.getElementById('invModalTitle').innerHTML = '➕ เพิ่มสินค้าใหม่';
+            document.getElementById('invBtnText').innerText = '💾 บันทึกข้อมูล';
+            document.getElementById('inventoryModal').classList.remove('hidden');
+            document.getElementById('inventoryModal').classList.add('flex');
+        }
+
+        function closeInventoryModal() {
+            document.getElementById('inventoryModal').classList.add('hidden');
+            document.getElementById('inventoryModal').classList.remove('flex');
+        }
+
+        async function loadInventoryData() {
+            const tableBody = document.getElementById('inventoryTableBody');
+            if(!tableBody) return;
+            
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-gray-400"><div class="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>กำลังดึงข้อมูลคลังสินค้า...</td></tr>';
+            
+            try {
+                const snapshot = await db.collection('inventory').orderBy('sku').get();
+                
+                if (snapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-gray-500">ย้งไม่มีสินค้าในระบบคลัง</td></tr>';
+                    document.getElementById('totalInventoryItems').innerText = '0';
+                    document.getElementById('totalInventoryValue').innerText = '0.00';
+                    return;
+                }
+
+                tableBody.innerHTML = '';
+                let totalItems = 0;
+                let totalValue = 0;
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    // แปลงค่าให้เป็นตัวเลข
+                    const stock = parseFloat(data.stock) || 0;
+                    const priceRetail = parseFloat(data.priceRetail) || 0;
+                    
+                    totalItems += stock;
+                    totalValue += (stock * priceRetail);
+
+                    // สร้าง Badge สถานะ
+                    let badgeHTML = '';
+                    if (data.allowDiscount) badgeHTML += '<span class="bg-blue-900/50 text-blue-300 text-[10px] px-2 py-0.5 rounded border border-blue-700/50 mr-1">ลดได้</span>';
+                    if (data.allowCommission) badgeHTML += '<span class="bg-green-900/50 text-green-300 text-[10px] px-2 py-0.5 rounded border border-green-700/50">คอมฯ</span>';
+
+                    const row = `
+                        <tr class="border-b border-gray-700/50 hover:bg-gray-800/50 transition">
+                            <td class="px-6 py-4 font-mono text-blue-400">${data.sku || '-'}</td>
+                            <td class="px-6 py-4 font-medium text-white">${data.name || '-'}</td>
+                            <td class="px-6 py-4 text-gray-400 text-sm">${data.category || '-'}</td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="text-lg font-bold ${stock <= 5 ? 'text-red-400' : 'text-white'}">${stock}</span>
+                                <span class="text-xs text-gray-500 ml-1">${data.unit || '-'}</span>
+                            </td>
+                            <td class="px-6 py-4 text-right text-gray-500">${data.cost ? parseFloat(data.cost).toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
+                            <td class="px-6 py-4 text-right font-bold text-green-400">${parseFloat(priceRetail).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                            <td class="px-6 py-4 text-center whitespace-nowrap">${badgeHTML}</td>
+                            <td class="px-6 py-4 text-center whitespace-nowrap no-print">
+                                <button onclick="editProduct('${doc.id}')" class="text-yellow-400 hover:text-yellow-300 bg-yellow-400/10 hover:bg-yellow-400/20 px-3 py-1 rounded transition text-sm mr-2">✏️ แก้ไข</button>
+                                <button onclick="deleteProduct('${doc.id}')" class="text-red-400 hover:text-red-300 bg-red-400/10 hover:bg-red-400/20 px-3 py-1 rounded transition text-sm">🗑️ ลบ</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+
+                // อัปเดต Summary Cards
+                document.getElementById('totalInventoryItems').innerText = totalItems.toLocaleString();
+                document.getElementById('totalInventoryValue').innerText = totalValue.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            } catch (error) {
+                console.error("Error loading inventory: ", error);
+                tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-red-500">❌ เกิดข้อผิดพลาด: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function saveProduct(event) {
+            event.preventDefault();
+            
+            const btnText = document.getElementById('invBtnText');
+            const spinner = document.getElementById('invSpinner');
+            
+            const id = document.getElementById('invProductId').value;
+            const sku = document.getElementById('invSku').value.trim();
+            const category = document.getElementById('invCategory').value;
+            const name = document.getElementById('invName').value.trim();
+            
+            if (!sku || !category || !name) {
+                alert('กรุณากรอกข้อมูลบังคับ (*) ให้ครบถ้วน');
+                return;
+            }
+
+            // แสดงสถานะกำลังบันทึก
+            btnText.textContent = 'กำลังบันทึก...';
+            spinner.classList.remove('hidden');
+            document.getElementById('invSubmitBtn').disabled = true;
+
+            const productData = {
+                sku: sku,
+                category: category,
+                name: name,
+                stock: Number(document.getElementById('invStock').value) || 0,
+                unit: document.getElementById('invUnit').value,
+                cost: Number(document.getElementById('invCost').value) || 0,
+                priceRetail: Number(document.getElementById('invPriceRetail').value) || 0,
+                priceWholesale1: Number(document.getElementById('invPriceWholesale1').value) || 0,
+                priceWholesale2: Number(document.getElementById('invPriceWholesale2').value) || 0,
+                allowDiscount: document.getElementById('invAllowDiscount').checked,
+                allowCommission: document.getElementById('invAllowCommission').checked,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                if (id) {
+                    // กรณีแก้ไข
+                    await db.collection('inventory').doc(id).update(productData);
+                    alert('✅ อัปเดตข้อมูลสินค้าเรียบร้อยแล้ว');
+                } else {
+                    // กรณีเพิ่มใหม่ (เช็ค SKU ซ้ำก่อน)
+                    const checkSku = await db.collection('inventory').where('sku', '==', sku).get();
+                    if (!checkSku.empty) {
+                        alert('❌ รหัส SKU นี้มีในระบบแล้ว กรุณาใช้รหัสอื่น');
+                        return; // หยุดการทำงานถ้า SKU ซ้ำ
+                    }
+                    
+                    productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('inventory').add(productData);
+                    alert('✅ เพิ่มสินค้าใหม่เข้าคลังเรียบร้อยแล้ว');
+                }
+
+                closeInventoryModal();
+                loadInventoryData(); // รีเฟรชตารางใหม่
+
+            } catch (error) {
+                console.error("Error saving product: ", error);
+                alert('❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error.message);
+            } finally {
+                btnText.textContent = '💾 บันทึกข้อมูล';
+                spinner.classList.add('hidden');
+                document.getElementById('invSubmitBtn').disabled = false;
+            }
+        }
+
+        async function editProduct(docId) {
+            try {
+                // ดึงข้อมูลสินค้าจาก Firestore
+                const doc = await db.collection('inventory').doc(docId).get();
+                if (!doc.exists) {
+                    alert('❌ ไม่พบข้อมูลสินค้านี้');
+                    return;
+                }
+                
+                const data = doc.data();
+
+                // เติมข้อมูลลงในฟอร์ม
+                document.getElementById('invProductId').value = docId;
+                document.getElementById('invSku').value = data.sku || '';
+                document.getElementById('invCategory').value = data.category || '';
+                document.getElementById('invName').value = data.name || '';
+                document.getElementById('invStock').value = data.stock || 0;
+                document.getElementById('invUnit').value = data.unit || 'ตัว';
+                document.getElementById('invCost').value = data.cost || '';
+                document.getElementById('invPriceRetail').value = data.priceRetail || '';
+                document.getElementById('invPriceWholesale1').value = data.priceWholesale1 || '';
+                document.getElementById('invPriceWholesale2').value = data.priceWholesale2 || '';
+                document.getElementById('invAllowDiscount').checked = data.allowDiscount !== false; // ค่าเริ่มต้นคือ true
+                document.getElementById('invAllowCommission').checked = data.allowCommission !== false;
+
+                // เปลี่ยนหัว Title โมดอล
+                document.getElementById('invModalTitle').innerHTML = '✏️ แก้ไขข้อมูลสินค้า';
+                document.getElementById('invBtnText').innerText = '💾 อัปเดตข้อมูล';
+
+                // เปิด Modal
+                document.getElementById('inventoryModal').classList.remove('hidden');
+                document.getElementById('inventoryModal').classList.add('flex');
+
+            } catch (error) {
+                console.error("Error getting product details:", error);
+                alert('❌ เกิดข้อผิดพลาดในการดึงข้อมูลสินค้า');
+            }
+        }
+
+        async function deleteProduct(docId) {
+            if (confirm("⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?\n\nการลบจะไม่สามารถกู้ข้อมูลกลับมาได้!")) {
+                try {
+                    await db.collection('inventory').doc(docId).delete();
+                    alert("✅ ลบสินค้าเรียบร้อยแล้ว");
+                    loadInventoryData(); // รีเฟรชตาราง
+                } catch (error) {
+                    console.error("Error removing product: ", error);
+                    alert("❌ เกิดข้อผิดพลาดในการลบสินค้า: " + error.message);
+                }
+            }
+        }
+
+        async function exportInventoryToExcel() {
+            try {
+                const snapshot = await db.collection('inventory').orderBy('sku').get();
+                if (snapshot.empty) {
+                    alert("ไม่มีข้อมูลสินค้าให้ส่งออก");
+                    return;
+                }
+
+                // สร้างหัวตาราง (เพิ่ม BOM เพื่อให้รองรับภาษาไทยใน Excel)
+                let csvContent = "\uFEFFSKU,ชื่อสินค้า,หมวดหมู่,คงเหลือ,หน่วยนับ,ราคาทุน,ราคาขายปลีก,ราคาขายส่ง1,ราคาขายส่ง2,ลดราคาได้,คิดคอมมิชชั่น\n";
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    // ป้องกัน comma ในข้อมูลทำให้ csv พัง โดยครอบด้วย double quote
+                    const sku = `"${data.sku || ''}"`;
+                    const name = `"${(data.name || '').replace(/"/g, '""')}"`;
+                    const category = `"${data.category || ''}"`;
+                    const stock = data.stock || 0;
+                    const unit = `"${data.unit || ''}"`;
+                    const cost = data.cost || 0;
+                    const retail = data.priceRetail || 0;
+                    const ws1 = data.priceWholesale1 || 0;
+                    const ws2 = data.priceWholesale2 || 0;
+                    const allowDiscount = data.allowDiscount ? "ใช่" : "ไม่ใช่";
+                    const allowComm = data.allowCommission ? "ใช่" : "ไม่ใช่";
+
+                    csvContent += `${sku},${name},${category},${stock},${unit},${cost},${retail},${ws1},${ws2},${allowDiscount},${allowComm}\n`;
+                });
+
+                // สร้างและดาวน์โหลดไฟล์
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute("href", url);
+                link.setAttribute("download", "Inventory_Database_IceProsound.csv");
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                console.error("Error exporting inventory to Excel: ", error);
+                alert("❌ เกิดข้อผิดพลาดในการส่งออกไฟล์ Excel");
+            }
+        }
+
+        function printInventoryReport() {
+            // ดึงข้อมูลในตารางปัจจุบัน
+            const tableHTML = document.querySelector('#inventorySection table').outerHTML;
+            const totalItems = document.getElementById('totalInventoryItems').innerText;
+            const totalValue = document.getElementById('totalInventoryValue').innerText;
+            
+            const date = new Date().toLocaleDateString('th-TH', { 
+                year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute:'2-digit'
+            });
+
+            // สร้างโครงสร้างหน้าสำหรับพิมพ์
+            const printContent = `
+                <html>
+                <head>
+                    <title>รายงานฐานข้อมูลคลังสินค้า - Ice Prosound</title>
+                    <style>
+                        body { font-family: 'Sarabun', sans-serif; padding: 20px; color: #333; }
+                        h1 { text-align: center; color: #1f2937; margin-bottom: 5px; font-size: 24px; }
+                        .subtitle { text-align: center; color: #6b7280; margin-bottom: 20px; font-size: 14px; }
+                        .summary { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; padding: 10px; background-color: #f3f4f6; border-radius: 8px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                        th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+                        th { background-color: #f9fafb; font-weight: bold; }
+                        /* ซ่อนคอลัมน์ที่ไม่ต้องการตอนปริ้น (การตั้งค่า, จัดการ) */
+                        th:nth-child(7), td:nth-child(7),
+                        th:nth-child(8), td:nth-child(8) { display: none !important; }
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .footer { margin-top: 30px; text-align: right; font-size: 12px; color: #6b7280; }
+                    </style>
+                </head>
+                <body>
+                    <h1>รายงานฐานข้อมูลคลังสินค้า (Inventory Report)</h1>
+                    <div class="subtitle">ร้าน Ice Prosound - ข้อมูล ณ วันที่ ${date}</div>
+                    
+                    <div class="summary">
+                        <span>📦 ยอดรวมสินค้าคงเหลือ: ${totalItems} ชิ้น</span>
+                        <span>💰 มูลค่าคลังรวมทั้งหมด: ${totalValue} บาท</span>
+                    </div>
+
+                    ${tableHTML}
+                    
+                    <div class="footer">
+                        ออกรายงานโดยระบบ Ice Prosound POS
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // เปิดหน้าต่างใหม่เพื่อพิมพ์
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            // รอให้โหลดเสร็จแล้วสั่งพิมพ์
+            printWindow.onload = function() {
+                printWindow.print();
+                // printWindow.close(); // ปิดหน้าต่างอัตโนมัติหลังพิมพ์ (optional)
+            };
+        }
+
+        function filterInventory() {
+            const nameSearch = document.getElementById('invSearchInput').value.toLowerCase();
+            const categorySearch = document.getElementById('invCategorySearchInput').value.toLowerCase();
+            const tableBody = document.getElementById('inventoryTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                // ข้ามแถวที่แสดงสถานะ "กำลังโหลด" หรือ "ไม่มีข้อมูล"
+                if (rows[i].cells.length < 8) continue;
+
+                const sku = rows[i].cells[0].textContent.toLowerCase();
+                const name = rows[i].cells[1].textContent.toLowerCase();
+                const category = rows[i].cells[2].textContent.toLowerCase();
+
+                // ตรวจสอบว่าชื่อหรือ SKU ตรงกัน และ หมวดหมู่ตรงกัน
+                const matchesNameOrSku = name.includes(nameSearch) || sku.includes(nameSearch);
+                const matchesCategory = category.includes(categorySearch);
+
+                if (matchesNameOrSku && matchesCategory) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+
+        // Initialize UI
+        updateCartUI();
+    </script>
+</body>
+</html>
