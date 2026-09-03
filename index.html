@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IceProsound - ERP System</title>
+    <!-- Google Fonts: สไตล์ตัวอักษรขาด (Stencil) -->
+    <link href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&display=swap" rel="stylesheet">
     <!-- Tailwind CSS (CDN for UI) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -126,8 +128,9 @@
 
     <!-- Navbar -->
     <nav class="glass-panel p-4 flex justify-between items-center sticky top-0 z-50">
-        <div class="text-2xl font-bold text-blue-400 tracking-wider">
-            ICE<span class="text-white">PROSOUND</span>
+        <div class="flex items-center gap-2 text-2xl font-bold tracking-wider">
+            <img src="assets/ice-logo-new.jpg" alt="ICE Logo" class="h-14 w-14 md:h-16 md:w-16 object-contain rounded-full shadow-lg border-2 border-slate-700">
+            <span class="text-white">PROSOUND</span>
         </div>
         <!-- เมนูหลัก ซ่อนบนมือถือ แสดงบนคอม (hidden md:flex) -->
         <div class="hidden md:flex space-x-6 text-lg">
@@ -615,6 +618,13 @@
                                 <option value="เพาเวอร์แอมป์">เพาเวอร์แอมป์</option>
                                 <option value="มิกซ์+คอนโทรล">มิกซ์+คอนโทรล</option>
                                 <option value="สายไฟ+สายสัญญาณ+ตู้ไฟ">สายไฟ+สายสัญญาณ+ตู้ไฟ</option>
+                                <option value="แร็คอุปกรณ์">แร็คอุปกรณ์</option>
+                                <option value="ชุดไมโครโฟน+เครื่องควบคุม+ขาไมค์">ชุดไมโครโฟน+เครื่องควบคุม+ขาไมค์</option>
+                                <option value="รายการ Truss">รายการ Truss</option>
+                                <option value="รายการรอกไฟฟ้า">รายการรอกไฟฟ้า</option>
+                                <option value="รายการนั่งร้านลิ่มล็อค">รายการนั่งร้านลิ่มล็อค</option>
+                                <option value="รายการเวที">รายการเวที</option>
+                                <option value="รายการเมการูฟ">รายการเมการูฟ</option>
                                 <option value="อื่นๆ">อื่นๆ</option>
                             </select>
                         </div>
@@ -870,37 +880,60 @@
         };
 
         // 2. ฟังก์ชันเปิดป๊อปอัป
-        function openModal(categoryName) {
+        // 2. ฟังก์ชันเปิดป๊อปอัป (อัปเดต: ดึงข้อมูลจากคลังสินค้าจริง Firebase)
+        async function openModal(categoryName) {
             const modal = document.getElementById('itemModal');
             const modalContent = document.getElementById('modalContent');
             const title = document.getElementById('modalTitle');
             const icon = document.getElementById('modalIcon');
             const itemList = document.getElementById('modalItemList');
             
-            // ดึงข้อมูล
-            const data = categoryData[categoryName] || { icon: '📦', items: ['ไม่พบรายการสินค้าในหมวดหมู่นี้'] };
-            
             title.textContent = categoryName;
-            icon.textContent = data.icon;
             
-            // สร้างรายการ HTML
-            itemList.innerHTML = data.items.map(item => `
-                <div class="flex items-center justify-between p-3 bg-gray-800/40 rounded border border-gray-700/50 hover:bg-blue-900/30 hover:border-blue-500/50 transition cursor-pointer group">
-                    <span class="text-gray-200 group-hover:text-blue-300">` + item + `</span>
-                    <button onclick="addToCart('` + item + `')" class="bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white px-3 py-1 rounded text-sm transition shadow hover:shadow-blue-500/50">
-                        + เลือก
-                    </button>
-                </div>
-            `).join('');
-
+            // ดึงไอคอนจาก categoryData ถ้ามี (ถ้าไม่มีใช้ 📦)
+            const metaData = categoryData[categoryName] || { icon: '📦' };
+            icon.textContent = metaData.icon;
+            
+            // แสดงสถานะกำลังโหลด
+            itemList.innerHTML = '<div class="text-center text-gray-400 p-4">กำลังโหลดฐานข้อมูลจากคลังสินค้า... ⏳</div>';
+            
             // แสดง Modal
             modal.classList.remove('hidden');
-            // Effect เฟดอิน
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
                 modalContent.classList.remove('scale-95');
                 modalContent.classList.add('scale-100');
             }, 10);
+
+            try {
+                // [LILIN'S SURGICAL INSERT] : วิ่งไปดึงข้อมูลคลังสินค้า ที่หมวดหมู่ตรงกับที่บอสกคลิก
+                const snapshot = await db.collection('inventory').where('category', '==', categoryName).get();
+                
+                if(snapshot.empty) {
+                    itemList.innerHTML = '<div class="text-center text-red-400 p-4">⚠️ ยังไม่มีสินค้าในหมวดหมู่นี้ในคลัง (กรุณาไปเพิ่มที่ฐานข้อมูลคลังสินค้า)</div>';
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const product = doc.data();
+                    html += `
+                        <div class="flex items-center justify-between p-3 bg-gray-800/40 rounded border border-gray-700/50 hover:bg-blue-900/30 hover:border-blue-500/50 transition cursor-pointer group">
+                            <div>
+                                <span class="text-gray-200 group-hover:text-blue-300 font-medium">` + product.name + `</span>
+                                <div class="text-xs text-slate-400 mt-1">คงเหลือ: <span class="text-yellow-400">` + (product.stock || 0) + ` ` + (product.unit || 'ชิ้น') + `</span></div>
+                            </div>
+                            <button onclick="addToCart('` + product.name + `')" class="bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white px-3 py-1 rounded text-sm transition shadow hover:shadow-blue-500/50">
+                                + เลือก
+                            </button>
+                        </div>
+                    `;
+                });
+                itemList.innerHTML = html;
+            } catch (error) {
+                console.error("Error loading category data:", error);
+                itemList.innerHTML = '<div class="text-center text-red-500 p-4">❌ Error: ' + error.message + '</div>';
+            }
         }
 
         // 3. ฟังก์ชันปิดป๊อปอัป
@@ -1181,6 +1214,13 @@
         // 9.5 ฟังก์ชันพิมพ์ใบเบิก/ยืม A4 (สากล)
         function printRequisitionA4(data, items) {
             const printWindow = window.open('', '_blank', 'width=900,height=1200');
+            
+            // [LILIN'S SURGICAL INSERT] : Safety Check for Pop-up Blocker
+            if (!printWindow) {
+                alert('⚠️ ระบบไม่สามารถเปิดหน้าต่างพิมพ์ได้ (Pop-up ถูกบล็อก)\n\n👉 กรุณาไปที่สัญลักษณ์ แม่กุญแจ/แจ้งเตือน บนแถบ URL ของเบราว์เซอร์\n👉 และเลือก "อนุญาต Pop-ups (Allow pop-ups)" สำหรับเว็บไซต์นี้ค่ะ');
+                return;
+            }
+
             const dateStr = new Date().toLocaleString('th-TH');
             
             // วนลูปสร้างแถวตาราง
@@ -1485,6 +1525,18 @@
                     requisitionData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     await db.collection('requisitions').add(requisitionData);
                     alert(`✅ บันทึกใบเบิกสำเร็จ!\n\nผู้เบิก: ${techName}\nผู้อนุมัติ: ${approverName}\nไซต์งาน: ${requisitionData.jobSite}`);
+                    
+                    // [LILIN'S SURGICAL INSERT] : ตัดสต๊อกอัตโนมัติ (เฉพาะตอนสร้างใบเบิกใหม่)
+                    cart.forEach(item => {
+                        db.collection("inventory").where("name", "==", item.name).get()
+                        .then((querySnapshot) => {
+                            querySnapshot.forEach((doc) => {
+                                db.collection("inventory").doc(doc.id).update({
+                                    stock: firebase.firestore.FieldValue.increment(-item.qty)
+                                });
+                            });
+                        });
+                    });
                 }
                 
                 // รีเฟรชตารางถ้าย้ายไปหน้า Dashboard/Report แล้ว (เผื่อมีการแก้ไขแล้วปิด modal)
@@ -1869,6 +1921,13 @@
 
             // เปิดหน้าต่างใหม่เพื่อพิมพ์
             const printWindow = window.open('', '_blank');
+            
+            // [LILIN'S SURGICAL INSERT] : Safety Check for Pop-up Blocker
+            if (!printWindow) {
+                alert('⚠️ ระบบไม่สามารถเปิดหน้าต่างพิมพ์ได้ (Pop-up ถูกบล็อก)\n\n👉 กรุณาไปที่สัญลักษณ์ แม่กุญแจ/แจ้งเตือน บนแถบ URL ของเบราว์เซอร์\n👉 และเลือก "อนุญาต Pop-ups (Allow pop-ups)" สำหรับเว็บไซต์นี้ค่ะ');
+                return;
+            }
+
             printWindow.document.write(printContent);
             printWindow.document.close();
             
@@ -2226,6 +2285,13 @@
 
             // เปิดหน้าต่างใหม่เพื่อพิมพ์
             const printWindow = window.open('', '_blank');
+            
+            // [LILIN'S SURGICAL INSERT] : Safety Check for Pop-up Blocker
+            if (!printWindow) {
+                alert('⚠️ ระบบไม่สามารถเปิดหน้าต่างพิมพ์ได้ (Pop-up ถูกบล็อก)\n\n👉 กรุณาไปที่สัญลักษณ์ แม่กุญแจ/แจ้งเตือน บนแถบ URL ของเบราว์เซอร์\n👉 และเลือก "อนุญาต Pop-ups (Allow pop-ups)" สำหรับเว็บไซต์นี้ค่ะ');
+                return;
+            }
+
             printWindow.document.write(printContent);
             printWindow.document.close();
             
