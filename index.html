@@ -1243,16 +1243,18 @@
                     <title>ใบเบิก-ยืมอุปกรณ์</title>
                     <style>
                         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
-                        @page { size: A4 landscape; margin: 10mm; }
+                        @page { size: A4 portrait; margin: 10mm; }
                         body { 
                             font-family: 'Sarabun', sans-serif; 
                             padding: 20px; 
+                            margin: 0;
                             color: #000; 
                             background-color: #fff;
                         }
                         .container {
-                            max-width: 210mm;
-                            margin: 0 auto;
+                            width: 100%;
+                            max-width: 100%;
+                            margin: 0;
                         }
                         .header-container {
                             display: flex;
@@ -1289,16 +1291,18 @@
                             line-height: 1.6;
                         }
                         table { 
-                            width: 100%; 
+                            width: 100%;
                             border-collapse: collapse; 
                             margin-bottom: 40px; 
                             font-size: 15px;
+                            table-layout: fixed;
                         }
                         th { 
                             background-color: #e5e7eb; 
                             border: 1px solid #333; 
                             padding: 10px; 
                             font-weight: 600;
+                            text-align: center;
                         }
                         .signatures { 
                             display: flex; 
@@ -1343,10 +1347,10 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th width="10%">ลำดับ</th>
-                                    <th width="60%">รายการอุปกรณ์</th>
+                                    <th width="8%">ลำดับ</th>
+                                    <th width="67%">รายการอุปกรณ์</th>
                                     <th width="10%">จำนวน</th>
-                                    <th width="20%">หมายเหตุ</th>
+                                    <th width="15%">หมายเหตุ</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1377,11 +1381,11 @@
             `;
             printWindow.document.write(htmlContent);
             printWindow.document.close();
-            // หน่วงเวลาให้ Font โหลดเสร็จแล้วสั่งพิมพ์
-            setTimeout(() => {
+            
+            // [LILIN'S SURGICAL INSERT] : เปลี่ยนจาก setTimeout เป็น onload เพื่อให้ปริ้นท์เด้ง 100% ไม่สะดุด
+            printWindow.onload = function() {
                 printWindow.print();
-                printWindow.close();
-            }, 800);
+            };
         }
 
         // ==========================================

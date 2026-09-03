@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICE PROSOUND - นำเข้าฐานข้อมูลสินค้า</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- Firebase Configuration & Initialization -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw_5gohfTx5nJtx5BDbIAbvu3Hks8rV70",
+            authDomain: "iceprosound-11be6.firebaseapp.com",
+            projectId: "iceprosound-11be6",
+            storageBucket: "iceprosound-11be6.firebasestorage.app",
+            messagingSenderId: "892730685361",
+            appId: "1:892730685361:web:f9c09773176c1df140af90"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <div class="max-w-2xl mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+        <h1 class="text-3xl font-bold mb-2 text-blue-400">นำเข้าฐานข้อมูลสินค้า (Inventory Import)</h1>
+        <p class="text-gray-400 mb-8">เครื่องมือนี้จะดึงข้อมูลจาก \categoryData\ ในระบบ และบันทึกเข้า Firebase โดยอัตโนมัติ</p>
+        
+        <div id="statusArea" class="mb-8 p-4 bg-gray-900 rounded-lg h-64 overflow-y-auto font-mono text-sm">
+            <div class="text-green-400">ระบบพร้อมทำงาน...</div>
+        </div>
+
+        <button id="importBtn" onclick="startImport()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-lg transition-colors text-lg">
+            🚀 เริ่มนำเข้าข้อมูลสินค้าทั้งหมดเข้าฐานข้อมูล
+        </button>
+    </div>
+
+    <script>
+        // ข้อมูลตั้งต้นจาก index.html
+        const categoryData = {
+            'รายการโคมไฟ': { icon: '💡', items: ['Moving Beam F-580', 'Moving Beam T-580 TUNA', 'Moving Beam ip650F', 'BSW Moving Beam K600', 'BSWF Moving Beam XT800', 'Beam 80W / ไฟพาร์', 'Tilt Strobe 1200W', 'Strobe LED 1000W', 'Strobe LED 200W', 'Strobe MB-H001', 'Bar Dot / AM-F55510', 'Bar Pixell / AM-CP3216', 'Moving Zoom 3715', 'Tilt Bar', 'BEE EYE 1940 / K10', 'BEE EYE 1940 กันน้ำ', 'ไฟสปอร์ตไลท์ 2 หน้า (4 หัว)', 'ไฟสปอร์ตไลท์ 1 หน้า (2 หัว)', 'ไฟสปอร์ตไลท์ COB', 'LED PAR กันน้ำ', 'Super PAR', 'LED PAR 3Wx54 / 3IN1', 'LED PAR 3Wx54 / 4IN1', 'LED PAR 10Wx18 / 4IN1', 'LED PAR 12Wx18 / 6IN1', 'LED PAR 64/1000W'] },
+            'ไฟเลเซอร์ + CO2': { icon: '💨', items: ['เลเซอร์ เขียว / ออกสี', 'เลเซอร์ 50W สีสันทวีป', 'เลเซอร์ 30W สีสันทวีป', 'เครื่องพ่น CO2'] },
+            'บอร์ดคอนโทรลไฟ+บูทเตอร์': { icon: '🎛️', items: ['บอร์ดคอนโทรล MA2, NPU, Grand MA3', 'บอร์ดสไลด์ MA / ปีก, DMX Mixer 36', 'บูทเตอร์ AM-SP8 ตัวเล็ก', 'บูทเตอร์ PM2 / DMX Splitter 4CH, RDM8402J / DMX Splitter 4', 'บูทเตอร์ DMX 4 ช่อง, RDM DMX512', 'ตู้ DIMMER 6K. 12 CH.'] },
+            'สายสัญญาณไฟ': { icon: '🔌', items: ['สายสัญญาณลิงค์ (3ม., 5ม., 10ม., 20ม., LED PAR กันน้ำ 3ม.)', 'สายพ่วงไฟ (ปลั๊ก Y, ปลั๊ก Y-2 หัว 16A, ปลั๊ก Y-4 หัว 16A, ปลั๊กเมน-เมีย 5ม./10ม.)'] },
+            'สายไฟ': { icon: '⚡', items: ['สายไฟ 16A/32A (10ม., 20ม., 25ม.), พาวเวอร์คอน 5ม., สายไฟ LED PAR กันน้ำ 3ม.'] },
+            'หมวก+แขนโคมไฟ': { icon: '🏗️', items: ['หมวก (สั้น/กลาง/ใหญ่, หมวก Moving Bar, แขนโคมไฟ)'] },
+            'ลำโพง': { icon: '🔊', items: ['ลำโพง NEXO: M46, B112, S118/SUB, GEO M1220, GEO M1210, RS18, PS15 UR, STM M28, STM 118', 'ลำโพง RCF & Admark: RCF ART 310A, Admark AD-L5A, AD-728C/SUB, AD-321A/SUB', 'ลำโพง ICE: ICE SUB 218, ICE SUB 18 นิ้ว (RS18, RS28, LS18), ICE LINE ARRAY 212, ICE PA 10 นิ้ว/V8', 'ลำโพง Active: Active 12 นิ้ว/FPJ 12AD, Active 15 นิ้ว/FPJ 15AD'] },
+            'เพาเวอร์แอมป์': { icon: '🔋', items: ['แอมป์ NEXO', 'แอมป์ ICE PROSOUND/PA', 'แอมป์ ICE PROSOUND/SUB'] },
+            'มิกซ์+คอนโทรล': { icon: '🎚️', items: ['Mixers: DIGICO X-SD08, Midas M32 Live, YAMAHA DM7, YAMAHA MG12XU, YAMAHA DM3', 'Stage Boxes: DIGICO, Midas DL32, YAMAHA Rio3224-D2', 'Controllers: ชุดคอนโทรล Admark DX428, คอนโทรล LAKE LMX88, คอนโทรล Marani MIR-260E', 'ชุดเครื่องรับ MRT MADI หูช้าง, กล่อง DI BOX'] },
+            'สายไฟ+สายสัญญาณ+ตู้ไฟ': { icon: '🔌', items: ['สายไฟ+สายสัญญาณ+สายพ่วงไฟ (ลำโพง 4/8 คอร์, สายสัญญาณ XLR 4/8/12 คอร์, ตู้ไฟ, บอร์ดไฟ, เมนไฟ, ย่อยเมนไฟ)'] },
+            'แร็คอุปกรณ์': { icon: '🗄️', items: ['แร็คอุปกรณ์ (อุปกรณ์แขวนลำโพงทอง/แดง/ดำ/เงิน, Fly Bar แขวนลำโพง NEXO/Admark/J8/V8/LS18)'] },
+            'ชุดไมโครโฟน+เครื่องควบคุม+ขา': { icon: '🎤', items: ['ชุดไมค์+เครื่องรับสัญญาณ+ไมค์ลอย (Wireless Intercom, Sound Vision, SHURE SM58/SM57, ขาตั้งไมค์ใหญ่/Baby Boom/กลอง, ขาตั้งลำโพง)'] },
+            'รายการ Truss': { icon: '🏗️', items: ['Truss 1ม., 2ม., 3ม., 3ม.(40cm) (สี: ดำ/เงิน/เทา)', 'ข้อต่อ (ดำ/เงิน), แขนสลอน (1ม./2ม.), มอเตอร์, ลูกหมุน, สลัก+พิน, แขนยื่นติดกล้อง, กิ๊บ, บานพับ'] },
+            'รายการรอกไฟฟ้': { icon: '⚙️', items: ['รอกไฟฟ้า 1T x 20M, 2T x 36M', 'คอนโทรลรอกไฟฟ้า HGK-G-4, HGK-G-8, HGK-G-16'] },
+            'รายการนั่งร้านเหล็ก': { icon: '🪜', items: ['นั่งร้าน 1ม., นั่งร้าน 2ม., แขน 2ม., แผง 2.40ม., แผ่นทางเดิน 2ม., ขาปรับ 50cm, บันได, ล้อเกลียว'] },
+            'รายการเวที': { icon: '🎭', items: ['แผ่นพื้นเวที (120*240mm, 120*120mm)', 'ขาเวที (สั้น/ดำ พลาสติก), ขาเวที (1.20-1.80m, 0.80-1.40m, 0.60-0.80m), ขาปรับ, บันไดเวที'] },
+            'รายการเต็นท์': { icon: '⛺', items: ['เต็นท์ 5 เมตร (5ม./2ม.), ขา (5ม./1.70ม.), เส้นทะแยง 3.30ม., ผ้าเต็นท์ (ขาว/ดำ)', 'อุปกรณ์ยึด (กิ๊บ, สลิงดึง, ชุดพับสลิง, พิน M30, มอเตอร์)', 'อุปกรณ์สลิง/รอก (รอกโซ่ 4T/2T, ชุดสลิง ดำ/เงิน, สเก็น ดำ/เงิน, เกลียวเร่ง 3 ขนาด)'] }
+        };
+
+        function generateSKU(category, index) {
+            const prefix = category.substring(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, 'GEN');
+            return 'ICE-' + prefix + '-' + String(index + 1).padStart(4, '0');
+        }
+
+        function log(message, type = 'info') {
+            const statusArea = document.getElementById('statusArea');
+            const colorClass = type === 'error' ? 'text-red-400' : (type === 'success' ? 'text-green-400' : 'text-gray-300');
+            statusArea.innerHTML += '<div class="' + colorClass + '">' + message + '</div>';
+            statusArea.scrollTop = statusArea.scrollHeight;
+        }
+
+        async function startImport() {
+            const btn = document.getElementById('importBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'กำลังนำเข้าข้อมูล... (ห้ามปิดหน้านี้)';
+            btn.classList.replace('bg-blue-600', 'bg-gray-600');
+
+            try {
+                log('กำลังล้างข้อมูลเก่าทั้งหมดในฐานข้อมูลเพื่อป้องกันข้อมูลซ้ำซ้อน...');
+                const oldDocs = await db.collection('inventory').get();
+                let deleteBatch = db.batch();
+                let delCount = 0;
+                oldDocs.forEach(doc => {
+                    deleteBatch.delete(doc.ref);
+                    delCount++;
+                });
+                if (delCount > 0) {
+                    await deleteBatch.commit();
+                    log('✅ ลบข้อมูลเก่าที่ผิดพลาดสำเร็จ ' + delCount + ' รายการ', 'success');
+                } else {
+                    log('ไม่มีข้อมูลเก่าที่ต้องลบ');
+                }
+
+                let totalItems = 0;
+                let successCount = 0;
+
+                // นับจำนวนทั้งหมดก่อน
+                for (const cat in categoryData) {
+                    totalItems += categoryData[cat].items.length;
+                }
+                log('พบข้อมูลสินค้าทั้งหมด ' + totalItems + ' รายการ...');
+
+                const batchSize = 10;
+                let currentBatch = db.batch();
+                let batchCount = 0;
+
+                // วนลูปหมวดหมู่
+                for (const [categoryName, categoryInfo] of Object.entries(categoryData)) {
+                    log('<br>กำลังประมวลผลหมวดหมู่: [' + categoryName + ']');
+                    
+                    // วนลูปสินค้าในหมวด
+                    for (let i = 0; i < categoryInfo.items.length; i++) {
+                        const itemName = categoryInfo.items[i];
+                        const sku = generateSKU(categoryName, i);
+                        
+                        const docRef = db.collection('inventory').doc();
+                        currentBatch.set(docRef, {
+                            name: itemName,
+                            category: categoryName,
+                            sku: sku,
+                            stock: 0,
+                            costPrice: 0,
+                            priceRetail: 0,
+                            priceWholesale1: 0,
+                            priceWholesale2: 0,
+                            allowDiscount: true,
+                            allowCommission: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+
+                        batchCount++;
+                        successCount++;
+                        log('  + เตรียมบันทึก: ' + itemName + ' (' + sku + ')');
+
+                        // Commit batch ทุก 10 รายการเพื่อไม่ให้โหลดหนักเกินไป
+                        if (batchCount === batchSize) {
+                            await currentBatch.commit();
+                            log('--- บันทึกเซ็ต ' + successCount + '/' + totalItems + ' สำเร็จ ---', 'success');
+                            currentBatch = db.batch(); // เริ่ม batch ใหม่
+                            batchCount = 0;
+                        }
+                    }
+                }
+
+                // Commit ส่วนที่เหลือ (ถ้ามี)
+                if (batchCount > 0) {
+                    await currentBatch.commit();
+                    log('--- บันทึกเซ็ตสุดท้ายสำเร็จ ---', 'success');
+                }
+
+                log('<br>🎉 เสร็จสิ้น! นำเข้าข้อมูลสินค้าเข้าฐานข้อมูลสำเร็จทั้งหมด ' + successCount + ' รายการ!', 'success');
+                alert('นำเข้าสำเร็จ ' + successCount + ' รายการ!\nสามารถเข้าไปดูได้ที่หน้าระบบคลังสินค้าแล้วครับ');
+                
+            } catch (error) {
+                log('❌ เกิดข้อผิดพลาด: ' + error.message, 'error');
+                console.error(error);
+                alert("เกิดข้อผิดพลาดในการนำเข้า กรุณาดูในคอนโซล");
+            } finally {
+                btn.innerHTML = '✨ นำเข้าข้อมูลเรียบร้อยแล้ว';
+            }
+        }
+    </script>
+</body>
+</html>
