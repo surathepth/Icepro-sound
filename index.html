@@ -1625,6 +1625,17 @@
                                 db.collection("inventory").doc(doc.id).update({
                                     stock: firebase.firestore.FieldValue.increment(-item.qty)
                                 });
+
+                                // [LILIN'S SURGICAL INSERT - PHASE 4] : บันทึกประวัติความเคลื่อนไหวลง Stock Card
+                                db.collection("stock_card").add({
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                    sku: doc.data().sku || '-',
+                                    name: item.name,
+                                    type: 'เบิกออกหน้างาน',
+                                    changeQty: -item.qty,
+                                    operator: techName,
+                                    note: "ไซต์งาน: " + jobSite
+                                });
                             });
                         });
                     });
