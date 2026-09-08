@@ -137,19 +137,10 @@
             <button onclick="showDashboard()" class="hover:text-blue-400 transition">แดชบอร์ด</button>
             <button onclick="showReport()" class="hover:text-blue-400 transition">📊 รายงาน</button>
             <button onclick="showStore()" class="hover:text-blue-400 transition text-blue-400">งานช่าง (เบิก/ยืม)</button>
-            <!-- Settings Dropdown Container -->
-            <div class="relative">
-                <button onclick="toggleSettingsMenu()" class="hover:text-blue-400 transition flex items-center gap-1">
-                    ⚙️ ตั้งค่าระบบ
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <!-- 🔒 Admin Login Button (Replacing the complex Settings Menu) -->
+                <button onclick="window.location.href='admin.html'" class="hover:text-blue-400 text-gray-500 transition flex items-center gap-1 text-sm border border-gray-700 px-3 rounded-full">
+                    🔒 Admin Login
                 </button>
-                <!-- Dropdown Menu (ซ่อนโดยปริยาย) -->
-                <div id="settingsDropdown" class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-[100] hidden border border-gray-700">
-                    <button onclick="showInventory()" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">คลังสินค้า</button>
-                    <button class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">ข้อมูลลูกค้า</button>
-                    <button onclick="showStaff()" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">ตั้งค่าพนักงาน</button>
-                </div>
-            </div>
         </div>
         <div class="flex items-center space-x-2">
             <!-- ปุ่มสแกน QR Code สำหรับมือถือ -->
@@ -454,15 +445,26 @@
 
                     <!-- 4. ผู้อนุมัติ -->
                     <div>
-                        <label class="block text-sm text-slate-300 mb-1 font-medium">ผู้อนุมัติ <span class="text-red-400">*</span></label>
+                        <label class="block text-sm text-slate-300 mb-1 font-medium">ผู้อนุมัติ </label>
                         <input list="dynamicStaffList" type="text" id="approverName" placeholder="เลือกหรือพิมพ์ชื่อผู้อนุมัติ..." class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
                     </div>
 
                     <!-- 5. ผู้ให้เบิก/ยืม -->
                     <div>
-                        <label class="block text-sm text-slate-300 mb-1 font-medium">ผู้ให้เบิก/ยืม <span class="text-red-400">*</span></label>
+                        <label class="block text-sm text-slate-300 mb-1 font-medium">ผู้ให้เบิก/ยืม </label>
                         <input list="dynamicStaffList" type="text" id="issuerName" placeholder="เลือกหรือพิมพ์ชื่อผู้ให้เบิก..." class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
                     </div>
+                                <!-- 6. ผู้ขนส่งสินค้า -->
+                                <div>
+                                    <label class="block text-sm text-slate-300 mb-1 font-medium">ผู้ขนส่งสินค้า </label>
+                                    <input list="dynamicStaffList" type="text" id="transporterName" placeholder="ชื่อผู้ขับรถ/ขนส่ง..." class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
+                                </div>
+
+                                <!-- 7. ผู้รับสินค้า -->
+                                <div>
+                                    <label class="block text-sm text-slate-300 mb-1 font-medium">ผู้รับสินค้า </label>
+                                    <input type="text" id="receiverName" placeholder="ชื่อผู้รับที่หน้างาน..." class="w-full bg-slate-700 border border-slate-500 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition">
+                                </div>
 
                     <!-- ตัวดึงข้อมูล (Datalist กลาง ดึงรายชื่อพนักงานจาก Firebase) -->
                     <datalist id="dynamicStaffList"></datalist>
@@ -851,7 +853,7 @@
 
             <!-- Modal Footer -->
             <div class="p-4 border-t border-gray-700 bg-gray-800/30 flex justify-end">
-                <button onclick="closeModal()" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition font-medium">ปิดหน้าต่าง</button>
+                <button onclick="saveCategoryToCart()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition font-medium shadow-lg shadow-blue-500/30">กดบันทึกลงตะกร้า</button>
             </div>
         </div>
     </div>
@@ -920,12 +922,20 @@
                     html += `
                         <div class="flex items-center justify-between p-3 bg-gray-800/40 rounded border border-gray-700/50 hover:bg-blue-900/30 hover:border-blue-500/50 transition cursor-pointer group">
                             <div>
-                                <span class="text-gray-200 group-hover:text-blue-300 font-medium">` + product.name + `</span>
-                                <div class="text-xs text-slate-400 mt-1">คงเหลือ: <span class="text-yellow-400">` + (product.stock || 0) + ` ` + (product.unit || 'ชิ้น') + `</span></div>
+                                <span class="text-gray-200 group-hover:text-blue-300 font-medium">${product.name}</span>
+                                <div class="text-xs text-slate-400 mt-1">คงเหลือ: <span class="text-yellow-400">${product.stock || 0} ${product.unit || 'ชิ้น'}</span></div>
                             </div>
-                            <button onclick="addToCart('` + product.name + `')" class="bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white px-3 py-1 rounded text-sm transition shadow hover:shadow-blue-500/50">
-                                + เลือก
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center space-x-2 bg-slate-900 rounded border border-slate-700 overflow-hidden shadow-sm">
+                                    <!-- ปุ่มลด -->
+                                    <button type="button" onclick="this.nextElementSibling.stepDown()" class="w-8 h-8 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold border-r border-slate-700">-</button>
+                                    <!-- ช่องใส่ตัวเลข (ซ่อน Spinner ถาวร) -->
+                                    <input type="number" data-product-name="${product.name}" class="w-16 bg-transparent text-white text-center font-bold focus:outline-none focus:bg-slate-800 modal-qty-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value="0" min="0">
+                                    <!-- ปุ่มเพิ่ม -->
+                                    <button type="button" onclick="this.previousElementSibling.stepUp()" class="w-8 h-8 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold border-l border-slate-700">+</button>
+                                </div>
+                            </div>
+                            </div>
                         </div>
                     `;
                 });
@@ -982,6 +992,66 @@
 
             updateCartUI();
         }
+        // [LILIN'S SURGICAL INSERT] : ฟังก์ชันกวาดของในหมวดหมู่ลงตะกร้ารวดเดียว
+        function saveCategoryToCart() {
+            const inputs = document.querySelectorAll('.modal-qty-input');
+            let itemsAdded = 0;
+            
+            inputs.forEach(input => {
+                const qty = parseInt(input.value || 0);
+                if (qty > 0) {
+                    const itemName = input.getAttribute('data-product-name');
+                    const existingItem = cart.find(item => item.name === itemName);
+                    if (existingItem) {
+                        existingItem.qty += qty;
+                    } else {
+                        cart.push({ name: itemName, qty: qty });
+                    }
+                    itemsAdded++;
+                }
+            });
+            
+            if (itemsAdded > 0) {
+                updateCartUI();
+                // ทำให้ไอคอนตะกร้ากระเด้งเตือนเบาๆ
+                const cartBtn = document.getElementById('cartBtn');
+                cartBtn.classList.add('scale-110', 'text-blue-400');
+                setTimeout(() => cartBtn.classList.remove('scale-110', 'text-blue-400'), 300);
+            }
+            
+            closeModal(); // กวาดเสร็จแล้วปิดหน้าต่างอัตโนมัติ
+        }
+
+        function addToCartBulk(itemName) {
+            // 1. ดึงค่าจำนวนจากช่องกรอกตัวเลข
+            const inputId = 'qty_' + itemName.replace(/\s+/g, '_');
+            const qtyInput = document.getElementById(inputId);
+            const qtyToAdd = parseInt(qtyInput.value);
+
+            if (!qtyToAdd || qtyToAdd < 1) return; // ป้องกันการกด 0 หรือค่าว่าง
+
+            // 2. ตรวจสอบของในตะกร้าและบวกจำนวนเข้าไป
+            const existingItem = cart.find(item => item.name === itemName);
+            if (existingItem) {
+                existingItem.qty += qtyToAdd;
+            } else {
+                cart.push({ name: itemName, qty: qtyToAdd });
+            }
+
+            // 3. แสดง Effect ปุ่มตะกร้ากระตุก (เหมือนเดิม)
+            const floatingBtn = document.getElementById('floatingCartBtn');
+            floatingBtn.classList.add('scale-125', 'bg-green-500');
+            setTimeout(() => {
+                floatingBtn.classList.remove('scale-125', 'bg-green-500');
+            }, 300);
+
+            // 4. รีเซ็ตช่องตัวเลขกลับเป็น 1 เพื่อให้พร้อมสำหรับการสั่งครั้งต่อไป
+            qtyInput.value = 1;
+
+            // 5. อัปเดต UI ตะกร้า
+            updateCartUI();
+        }
+
 
         // 2. อัปเดต UI หน้าจอ
         function updateCartUI() {
@@ -1021,7 +1091,7 @@
                         <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
                             <div class="flex items-center space-x-2 bg-gray-900 rounded-lg p-1 border border-gray-700">
                                 <button onclick="decreaseQty(${index})" class="w-8 h-8 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center transition">-</button>
-                                <span class="w-8 text-center text-white font-bold">${item.qty}</span>
+                                <input type="number" min="1" value="${item.qty}" onchange="updateCartItemQty(${index}, this.value)" class="w-16 h-8 text-center bg-gray-800 text-white font-bold border border-gray-600 rounded focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                                 <button onclick="increaseQty(${index})" class="w-8 h-8 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center transition">+</button>
                             </div>
                             <button onclick="removeFromCart(${index})" class="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded transition" title="ลบรายการนี้">
@@ -1048,6 +1118,17 @@
             cart[index].qty += 1;
             updateCartUI();
         }
+        // 4.5 อัปเดตจำนวนจากช่องกรอกในตะกร้าโดยตรง
+        function updateCartItemQty(index, newValue) {
+            const val = parseInt(newValue);
+            if (val && val >= 1) {
+                cart[index].qty = val;
+            } else {
+                cart[index].qty = 1; // ถ้ากรอกค่าน้อยกว่า 1 หรือผิดพลาด ให้เด้งกลับเป็น 1
+            }
+            updateCartUI();
+        }
+
 
         // 5. ลบออกจากตะกร้า
         function removeFromCart(index) {
@@ -1337,6 +1418,8 @@
                         <div class="info-grid">
                             <div>
                                 <div><strong>ผู้รับงาน :</strong> ${data.techName}</div>
+                                            <div><strong>ผู้ขนส่งสินค้า :</strong> </div>
+                                            <div><strong>ผู้รับสินค้า :</strong> </div>
                             </div>
                             <div>
                                 <div><strong>วันที่ทำรายการ:</strong> ${dateStr}</div>
@@ -1362,7 +1445,7 @@
                             <div class="sig-box">
                                 <div class="sig-line"></div>
                                 <p>( ${data.techName || '.............................................'} )</p>
-                                <p><strong>ผู้เบิก / ผู้ยืม</strong></p>
+                    <p><strong>ผู้สั่งงาน/ผู้เบิก / ผู้ยืม</strong></p>
                             </div>
                             <div class="sig-box">
                                 <div class="sig-line"></div>
@@ -1479,6 +1562,8 @@
             const jobSite = document.getElementById('jobSite').value.trim();
             const approverName = document.getElementById('approverName').value.trim();
             const issuerName = document.getElementById('issuerName').value.trim();
+    const transporterName = document.getElementById('transporterName').value.trim();
+    const receiverName = document.getElementById('receiverName').value.trim();
             
             // Validate: ตรวจสอบว่ามีของในตะกร้าไหม
             if (cart.length === 0) {
@@ -1486,11 +1571,11 @@
                 return;
             }
 
-            // Validate: ตรวจสอบการกรอกข้อมูลครบ 5 ช่อง
-            if (!techName || !techPin || !jobSite || !approverName || !issuerName) {
-                alert('⚠️ กรุณากรอก "ชื่อผู้เบิก", "รหัสผ่าน (PIN)", "ไซต์งาน", "ผู้อนุมัติ" และ "ผู้ให้เบิก/ยืม" ให้ครบถ้วน');
-                return;
-            }
+    // Validate: ตรวจสอบการกรอกข้อมูลที่จำเป็น (บังคับแค่ 3 ช่องเพื่อความรวดเร็ว)
+    if (!techName || !techPin || !jobSite) {
+        alert('⚠️ กรุณากรอก "ชื่อผู้เบิก", "รหัสผ่าน (PIN)", และ "ไซต์งาน" ให้ครบถ้วน');
+        return;
+    }
 
             // เปลี่ยนสถานะปุ่มเป็นกำลังโหลด
             const btnText = document.getElementById('saveBtnText');
@@ -1513,6 +1598,8 @@
                     jobAddress: populatedData.jobAddress || "ระบุเอง",
                     jobContact: populatedData.jobContact || "ระบุเอง",
                     jobSale: populatedData.jobSale || "ระบุเอง",
+        transporterName: transporterName,
+        receiverName: receiverName,
 
                     items: cart,
                     totalItems: cart.reduce((sum, item) => sum + item.qty, 0),
@@ -2337,3 +2424,4 @@
     </script>
 </body>
 </html>
+
