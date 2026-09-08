@@ -1,0 +1,116 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Database Seeding Tool - IceProsound</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #111; color: #fff; }
+        button { padding: 15px 30px; font-size: 18px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        button:disabled { background: #555; }
+        #log { margin-top: 20px; padding: 10px; background: #222; border: 1px solid #444; height: 400px; overflow-y: auto; font-family: monospace; }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .info { color: #0af; }
+    </style>
+</head>
+<body>
+    <h1>🛠️ เครื่องมือปลูกถ่ายฐานข้อมูล (Database Seeding Tool)</h1>
+    <p>สคริปต์นี้จะอ่านข้อมูลจากหมวดหมู่เก่า แล้วยิงเข้าสู่ Firebase ฐานข้อมูลจริง (คลังสินค้า) เพื่อให้เรามีข้อมูลจริงในการทดสอบหน้าเบิก-ยืม โดยไม่ต้องใช้ของปลอมอีกต่อไป</p>
+    
+    <button id="seedBtn" onclick="startSeeding()">🚀 เริ่มสร้างฐานข้อมูลจริงเข้า Firebase</button>
+    <div id="log">รอคำสั่ง...</div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw_5gohfTx5nJtx5BDbIAbvu3Hks8rV70",
+            authDomain: "iceprosound-11be6.firebaseapp.com",
+            projectId: "iceprosound-11be6",
+            storageBucket: "iceprosound-11be6.firebasestorage.app",
+            messagingSenderId: "892730685361",
+            appId: "1:892730685361:web:f9c09773176c1df140af90"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const categoryData = {
+            'รายการโคมไฟ': { icon: '💡', items: ['Moving Beam F-580', 'Moving Beam T-580 TUNA', 'Moving Beam ip650F', 'BSW Moving Beam K600', 'BSWF Moving Beam XT800', 'Beam 80W / ไฟพาร์', 'Tilt Strobe 1200W', 'Strobe LED 1000W', 'Strobe LED 200W', 'Strobe MB-H001', 'Bar Dot / AM-F55510', 'Bar Pixell / AM-CP3216', 'Moving Zoom 3715', 'Tilt Bar', 'BEE EYE 1940 / K10', 'BEE EYE 1940 กันน้ำ', 'ไฟสปอร์ตไลท์ 2 หน้า (4 หัว)', 'ไฟสปอร์ตไลท์ 1 หน้า (2 หัว)', 'ไฟสปอร์ตไลท์ COB', 'LED PAR กันน้ำ', 'Super PAR', 'LED PAR 3Wx54 / 3IN1', 'LED PAR 3Wx54 / 4IN1', 'LED PAR 10Wx18 / 4IN1', 'LED PAR 12Wx18 / 6IN1', 'LED PAR 64/1000W'] },
+            'ไฟเลเซอร์ + CO2': { icon: '💨', items: ['เลเซอร์ เขียว / ออกสี', 'เลเซอร์ 50W สีสันทวีป', 'เลเซอร์ 30W สีสันทวีป', 'เครื่องพ่น CO2'] },
+            'บอร์ดคอนโทรลไฟ+บูทเตอร์': { icon: '🎛️', items: ['บอร์ดคอนโทรล MA2, NPU, Grand MA3', 'บอร์ดสไลด์ MA / ปีก, DMX Mixer 36', 'บูทเตอร์ AM-SP8 ตัวเล็ก', 'บูทเตอร์ PM2 / DMX Splitter 4CH, RDM8402J / DMX Splitter 4', 'บูทเตอร์ DMX 4 ช่อง, RDM DMX512', 'ตู้ DIMMER 6K. 12 CH.'] },
+            'สายสัญญาณไฟ': { icon: '🔌', items: ['สายสัญญาณลิงค์ (3ม., 5ม., 10ม., 20ม., LED PAR กันน้ำ 3ม.)', 'พ่วงไฟ (จั้ม Y, ปลั๊ก Y-2 ตา 16A, ปลั๊ก Y-4 ตา 16A, ปลั๊กผู้-เมีย 5ม./10ม.)'] },
+            'สายไฟ': { icon: '⚡', items: ['สายไฟเมน 16A/32A (10ม., 20ม., 25ม.), พาวเวอร์คอน 5ม., สาย LED PAR กันน้ำ 3ม.'] },
+            'หมวก+แขนโคมไฟ': { icon: '🏗️', items: ['หมวก (สวม/กลาง/ใหญ่, หมวก Moving Bar, แขนสวม)'] },
+            'ลำโพง': { icon: '🔊', items: ['ลำโพง NEXO: M46, B112, S118/SUB, GEO M1220, GEO M1210, RS18, PS15 UR, STM M28, STM 118', 'ลำโพง RCF & Admark: RCF ART 310A, Admark AD-L5A, AD-728C/SUB, AD-321A/SUB', 'ลำโพง ICE: ICE SUB 218, ICE SUB 18 นิ้ว (RS18, RS28, LS18), ICE LINE ARRAY 212, ICE PA 10 นิ้ว/V8', 'ลำโพง Active: Active 12 นิ้ว/FPJ 12AD, Active 15 นิ้ว/FPJ 15AD'] },
+            'เพาเวอร์แอมป์': { icon: '🔋', items: ['เพาเวอร์ NEXO', 'เพาเวอร์ ICE PROSOUND/PA', 'เพาเวอร์ ICE PROSOUND/SUB'] },
+            'มิกซ์+คอนโทรล': { icon: '🎚️', items: ['Mixers: DIGICO X-SD08, Midas M32 Live, YAMAHA DM7, YAMAHA MG12XU, YAMAHA DM3', 'Stage Boxes: DIGICO, Midas DL32, YAMAHA Rio3224-D2', 'Controllers: ชุดคอนโทรล Admark DX428, คอนโทรล LAKE LMX88, คอนโทรล Marani MIR-260E', 'ชุดกล่องรับ MRT MADI แร็ค, กล่อง DI BOX'] },
+            'สายไฟ+สายสัญญาณ+ตู้ไฟ': { icon: '🔌', items: ['สายไฟ+สายสัญญาณ+พ่วง (ลำโพง 4/8 คอร์, สายสัญญาณ XLR 4/8/12 คอร์, ตู้ไฟ, โหลด, นั่งร้าน, รอกกว้าน)'] },
+            'แร็คอุปกรณ์': { icon: '🗄️', items: ['อุปกรณ์เสริม (อุปกรณ์แขวนลำโพงทอง/แดง/ดำ/เงิน, Fly Bar แขวนลำโพง NEXO/Admark/J8/V8/LS18)'] },
+            'ชุดไมโครโฟน+เครื่องควบคุม+ขาไมค์': { icon: '🎤', items: ['ชุดไมค์ลอย+เครื่องรับสัญญาณ+หูฟัง (Wireless Intercom, Sound Vision, SHURE SM58/SM57, ขาตั้งไมค์ใหญ่/Baby Boom/ไมค์กลอง, ขาตั้งลำโพง)'] },
+            'รายการ Truss': { icon: '⛩️', items: ['Truss 1ม., 2ม., 3ม., 3ม.(40cm) (กล่อง: มีสลัก/จอยท์)', 'ตอม่อ (ดำ/เงิน), แป้นหน้าแปลน (1ม./2ม.), ข้อต่อ, ลูกเต๋า, สลัก+พิน, แขนยื่นกล่อง, ผ้าใบหุ้มท่อ, ผ้าใบหุ้มตอม่อ'] },
+            'รายการรอกไฟฟ้า': { icon: '⛓️', items: ['รอกไฟฟ้า 1T x 20M, 2T x 36M', 'ตู้คอนโทรลรอกไฟฟ้า HGK-G-4, HGK-G-8, HGK-G-16'] },
+            'รายการนั่งร้านลิ่มล็อค': { icon: '🪜', items: ['เสา 1ม., เสา 2ม., แขน 2ม., ทะแยง 2.40ม., แผ่นทางเดิน 2ม., ขาปรับ 50cm, บันได, ยูเฮด'] },
+            'รายการเวที': { icon: '🎭', items: ['แผ่นพื้นเวที (120*240mm, 120*120mm)', 'ขาเวที (เหล็ก/มิเนียม ขาดำเงา), ขาเวที (1.20-1.80m, 0.80-1.40m, 0.60-0.80m), ขาปรับ, บันไดเวที'] },
+            'รายการเมการูฟ': { icon: '⛺', items: ['คาน 5 คอร์ด (5ม./2ม.), เสา (5ม./1.70ม.), ขาเต็นท์ 3.30ม., คานตั้ง (กล่อง/กล่อง)', 'อุปกรณ์ยึด (ผ้าใบหุ้ม, แป้นกลม, ชุดซับกลม, พิน M30, น็อต)', 'อุปกรณ์สลิง/รอก (รอกกว้าน 4T/2T, ชุดสเตย์ กลม/แบน, สเตย์ ดำ/เงิน, ยูเฮด 3 ขนาด)'] }
+        };
+
+        function logMsg(msg, type='info') {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `<div class="${type}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function startSeeding() {
+            document.getElementById('seedBtn').disabled = true;
+            logMsg("กำลังเริ่มกระบวนการเช็คข้อมูลที่มีอยู่เดิม...", "info");
+
+            let addedCount = 0;
+            let skippedCount = 0;
+
+            for (const [category, data] of Object.entries(categoryData)) {
+                logMsg(`กำลังตรวจสอบหมวดหมู่: ${category}`, "info");
+                for (const itemName of data.items) {
+                    try {
+                        // เช็คว่ามีสินค้าชื่อนี้อยู่แล้วหรือไม่ เพื่อป้องกันการใส่ซ้ำ
+                        const checkQuery = await db.collection('inventory').where('name', '==', itemName).get();
+                        
+                        if (!checkQuery.empty) {
+                            skippedCount++;
+                            logMsg(`- ข้าม: ${itemName} (มีอยู่ในระบบแล้ว)`, "info");
+                            continue;
+                        }
+
+                        // ถ้ายังไม่มี ให้สร้างใหม่
+                        const sku = "SKU-" + Math.floor(Math.random() * 1000000);
+                        const productData = {
+                            sku: sku,
+                            name: itemName,
+                            category: category,
+                            stock: 100, // ตั้งสต๊อกเริ่มต้นไว้ 100 ชิ้นให้ทดสอบเบิกได้
+                            unit: 'ชิ้น',
+                            cost: 0,
+                            priceRetail: 0,
+                            priceWholesale1: 0,
+                            priceWholesale2: 0,
+                            allowDiscount: true,
+                            allowCommission: true,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+
+                        await db.collection('inventory').add(productData);
+                        addedCount++;
+                        logMsg(`- เพิ่มสำเร็จ: ${itemName}`, "success");
+                    } catch (error) {
+                        logMsg(`- เกิดข้อผิดพลาดกับ ${itemName}: ${error.message}`, "error");
+                    }
+                }
+            }
+
+            logMsg(`🎉 เสร็จสมบูรณ์! เพิ่มข้อมูลใหม่ ${addedCount} รายการ, ข้ามข้อมูลซ้ำ ${skippedCount} รายการ`, "success");
+            alert(`ปลูกถ่ายข้อมูลเสร็จสิ้น!\nเพิ่มใหม่: ${addedCount}\nข้ามข้อมูลซ้ำ: ${skippedCount}`);
+            document.getElementById('seedBtn').disabled = false;
+        }
+    </script>
+</body>
+</html>
