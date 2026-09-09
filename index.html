@@ -134,6 +134,19 @@
             <img src="assets/ice-logo-new.jpg" alt="ICE Logo" class="h-14 w-14 md:h-16 md:w-16 object-contain rounded-full shadow-lg border-2 border-slate-700 bg-black" onerror="this.outerHTML='<div class=\'h-14 w-14 md:h-16 md:w-16 rounded-full shadow-lg border-2 border-slate-700 bg-black flex items-center justify-center\'><span class=\'text-white font-bold text-xl\' style=\'font-family: Allerta Stencil\'>ICE</span></div>'">
             <span class="text-white">PROSOUND</span>
         </div>
+        <!-- 🧭 Continuous Navigation Controls (Desktop) -->
+        <div class="hidden md:flex items-center bg-slate-900/90 border border-slate-700/80 rounded-xl p-1 gap-1 shadow-inner mr-4">
+            <button type="button" onclick="navigateBack()" id="btnNavBack" title="ถอยหลัง / ย้อนกลับ (Alt + Left)" class="p-1.5 px-3 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center gap-1.5" disabled>
+                <span>◀</span> <span class="hidden xl:inline">ถอยหลัง</span>
+            </button>
+            <button type="button" onclick="navigateHome()" id="btnNavHome" title="กลับหน้าแรก (Alt + Home)" class="p-1.5 px-3 rounded-lg text-xs font-semibold text-blue-400 hover:text-white hover:bg-blue-600/30 transition flex items-center gap-1.5">
+                <span>🏠</span> <span>Home</span>
+            </button>
+            <button type="button" onclick="navigateForward()" id="btnNavForward" title="เดินหน้า (Alt + Right)" class="p-1.5 px-3 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center gap-1.5" disabled>
+                <span class="hidden xl:inline">เดินหน้า</span> <span>▶</span>
+            </button>
+        </div>
+
         <!-- เมนูหลัก ซ่อนบนมือถือ แสดงบนคอม (hidden md:flex) -->
         <div class="hidden md:flex space-x-6 text-lg">
             <button onclick="showDashboard()" class="hover:text-blue-400 transition">แดชบอร์ด</button>
@@ -1401,10 +1414,9 @@
         // ==========================================
         
         // 9.5 ฟังก์ชันพิมพ์ใบเบิก/ยืม A4 (สากล)
-        function printRequisitionA4(data, items) {
-            const printWindow = window.open('', '_blank', 'width=900,height=1200');
+                function printRequisitionA4(data, items) {
+            const printWindow = window.open('', '_blank', 'width=950,height=1200');
             
-            // [LILIN'S SURGICAL INSERT] : Safety Check for Pop-up Blocker
             if (!printWindow) {
                 alert('⚠️ ระบบไม่สามารถเปิดหน้าต่างพิมพ์ได้ (Pop-up ถูกบล็อก)\n\n👉 กรุณาไปที่สัญลักษณ์ แม่กุญแจ/แจ้งเตือน บนแถบ URL ของเบราว์เซอร์\n👉 และเลือก "อนุญาต Pop-ups (Allow pop-ups)" สำหรับเว็บไซต์นี้ค่ะ');
                 return;
@@ -1412,139 +1424,295 @@
 
             const dateStr = new Date().toLocaleString('th-TH');
             
-            // วนลูปสร้างแถวตาราง
+            // วนลูปสร้างแถวตารางรายการอุปกรณ์จริง
             let tableRows = '';
-            items.forEach((item, index) => {
+            (items || []).forEach((item, index) => {
                 tableRows += `
                     <tr>
-                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">${index + 1}</td>
-                        <td style="border: 1px solid #333; padding: 8px;">${item.name}</td>
-                        <td style="border: 1px solid #333; padding: 8px; text-align: right; padding-right: 15px;">${item.qty} ${item.unit || 'ชิ้น'}</td>
-                        <td style="border: 1px solid #333; padding: 8px;"></td>
+                        <td style="border: 1px solid #475569; padding: 8px 6px; text-align: center; white-space: nowrap; font-weight: 600;">${index + 1}</td>
+                        <td style="border: 1px solid #475569; padding: 8px 10px; text-align: left; line-height: 1.4; word-break: break-word;">${item.name || '-'}</td>
+                        <td style="border: 1px solid #475569; padding: 8px 12px; text-align: right; white-space: nowrap; font-weight: 600;">${item.qty || 0} ${item.unit || 'ชิ้น'}</td>
+                        <td style="border: 1px solid #475569; padding: 8px 8px; text-align: center; color: #475569;">${item.note || ''}</td>
                     </tr>
                 `;
             });
 
-            // สร้างโครงร่าง A4 (HTML)
+            // เติมแถวตารางขั้นต่ำ (Minimum 10 Rows) เพื่อให้สัดส่วนตารางทอดตัวลงมาอย่างสวยงามสมดุลเต็มหน้ากระดาษ A4
+            const minRows = 10;
+            const currentLen = (items || []).length;
+            if (currentLen < minRows) {
+                for (let i = currentLen; i < minRows; i++) {
+                    tableRows += `
+                        <tr style="height: 30px;">
+                            <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center; color: #94a3b8; font-size: 12px;">${i + 1}</td>
+                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
+                            <td style="border: 1px solid #cbd5e1; padding: 6px 12px;"></td>
+                            <td style="border: 1px solid #cbd5e1; padding: 6px 8px;"></td>
+                        </tr>
+                    `;
+                }
+            }
+
+            // สร้างโครงร่าง A4 มาตรฐานสากล (HTML)
             const htmlContent = `
-                <html>
+                <!DOCTYPE html>
+                <html lang="th">
                 <head>
-                    <title>ใบเบิก-ยืมอุปกรณ์</title>
+                    <meta charset="UTF-8">
+                    <title></title>
                     <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
-                        @page { size: A4 portrait; margin: 10mm; }
+                        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap');
+                        @page { 
+                            size: A4 portrait; 
+                            margin: 0; 
+                        }
+                        * {
+                            box-sizing: border-box;
+                        }
                         body { 
                             font-family: 'Sarabun', sans-serif; 
-                            padding: 20px; 
+                            padding: 12mm 15mm; 
                             margin: 0;
-                            color: #000; 
+                            color: #0f172a; 
                             background-color: #fff;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
                         }
                         .container {
                             width: 100%;
                             max-width: 100%;
-                            margin: 0;
+                            margin: 0 auto;
                         }
-                        .header-container {
+                        /* ส่วนหัวเอกสารมาตรฐานสากล (Corporate Standard Header) */
+                        .header-wrapper {
                             display: flex;
+                            justify-content: space-between;
                             align-items: flex-start;
-                            border-bottom: 2px solid #000;
-                            padding-bottom: 15px;
-                            margin-bottom: 20px;
+                            border-bottom: 2px solid #0f172a;
+                            padding-bottom: 12px;
+                            margin-bottom: 14px;
                         }
-                        .header-text {
-                            flex-grow: 1;
-                            text-align: center;
+                        .company-block {
+                            text-align: left;
                         }
                         .company-name {
-                            font-size: 26px;
-                            font-weight: bold;
+                            font-size: 24px;
+                            font-weight: 800;
                             margin: 0;
-                            color: #000;
+                            letter-spacing: 0.5px;
+                            color: #0f172a;
+                            line-height: 1.2;
                         }
-                        .doc-title {
-                            font-size: 22px;
-                            font-weight: bold;
-                            margin-top: 5px;
-                            background-color: #f3f4f6;
+                        .company-subtitle {
+                            font-size: 12px;
+                            color: #64748b;
+                            margin-top: 3px;
+                            font-weight: 500;
+                        }
+                        .doc-block {
+                            text-align: right;
+                        }
+                        .doc-badge {
+                            font-size: 18px;
+                            font-weight: 700;
+                            background-color: #f1f5f9;
                             display: inline-block;
-                            padding: 5px 20px;
-                            border-radius: 5px;
-                            border: 1px solid #ccc;
+                            padding: 5px 16px;
+                            border-radius: 6px;
+                            border: 1px solid #cbd5e1;
+                            color: #0f172a;
+                            margin-bottom: 4px;
+                        }
+                        .doc-badge-en {
+                            font-size: 11px;
+                            font-weight: 600;
+                            color: #64748b;
+                            letter-spacing: 1px;
+                        }
+                        /* กรอบข้อมูลเอกสารและผู้เกี่ยวข้อง (Document Info Box) */
+                        .info-box {
+                            border: 1px solid #cbd5e1;
+                            border-radius: 6px;
+                            background-color: #f8fafc;
+                            padding: 10px 14px;
+                            margin-bottom: 16px;
                         }
                         .info-grid { 
                             display: flex; 
                             justify-content: space-between; 
-                            margin-bottom: 25px; 
-                            font-size: 15px;
-                            line-height: 1.6;
+                            gap: 16px;
+                            font-size: 13px;
+                            line-height: 1.55;
                         }
+                        .info-col-left {
+                            width: 48%;
+                            text-align: left;
+                        }
+                        .info-col-right {
+                            width: 52%;
+                            text-align: left;
+                        }
+                        .info-row {
+                            display: flex;
+                            align-items: flex-start;
+                            margin-bottom: 3px;
+                        }
+                        .info-label {
+                            font-weight: 700;
+                            white-space: nowrap;
+                            flex-shrink: 0;
+                            color: #1e293b;
+                        }
+                        .info-val {
+                            flex-grow: 1;
+                            word-break: break-word;
+                            padding-left: 6px;
+                            color: #0f172a;
+                        }
+                        /* ตารางรายการอุปกรณ์ */
                         table { 
                             width: 100%;
                             border-collapse: collapse; 
-                            margin-bottom: 40px; 
-                            font-size: 15px;
+                            margin-bottom: 16px; 
+                            font-size: 13.5px;
                             table-layout: fixed;
                         }
                         th { 
-                            background-color: #e5e7eb; 
-                            border: 1px solid #333; 
-                            padding: 10px; 
-                            font-weight: 600;
+                            background-color: #f1f5f9; 
+                            border: 1px solid #475569; 
+                            padding: 8px 6px; 
+                            font-weight: 700;
                             text-align: center;
+                            white-space: nowrap;
+                            color: #0f172a;
                         }
+                        /* กล่องเงื่อนไขและข้อกำหนดสากล */
+                        .terms-box {
+                            border: 1px dashed #94a3b8;
+                            border-radius: 6px;
+                            background-color: #fafafa;
+                            padding: 8px 12px;
+                            margin-bottom: 22px;
+                            font-size: 11.5px;
+                            color: #334155;
+                            line-height: 1.5;
+                        }
+                        .terms-title {
+                            font-weight: 700;
+                            color: #0f172a;
+                            margin-bottom: 2px;
+                        }
+                        /* ลายเซ็นท้ายเอกสาร */
                         .signatures { 
                             display: flex; 
                             justify-content: space-between; 
-                            margin-top: 50px; 
                             text-align: center; 
-                            font-size: 14px;
+                            font-size: 12.5px;
+                            page-break-inside: avoid;
                         }
                         .sig-box { 
                             width: 30%; 
                         }
                         .sig-line { 
-                            border-bottom: 1px dashed #000; 
-                            margin-bottom: 5px; 
-                            height: 40px; 
+                            border-bottom: 1px dashed #475569; 
+                            margin-bottom: 6px; 
+                            height: 38px; 
+                        }
+                        .sig-name {
+                            margin: 3px 0;
+                            white-space: nowrap;
+                            font-weight: 500;
+                        }
+                        .sig-title {
+                            margin: 3px 0;
+                            font-weight: 700;
+                            white-space: nowrap;
+                            color: #1e293b;
+                        }
+                        .sig-date {
+                            margin-top: 4px;
+                            font-size: 11.5px;
+                            color: #64748b;
                         }
                         @media print {
-                            body { -webkit-print-color-adjust: exact; }
-                            @page { margin: 5mm; }
+                            body { margin: 0; padding: 12mm 15mm; }
+                            .no-print, #mobileQuickNav, #btnNavBack, #btnNavHome, #btnNavForward, nav, footer, button {
+                                display: none !important;
+                                visibility: hidden !important;
+                            }
                         }
                     </style>
                 </head>
                 <body>
                     <div class="container">
-                        <div class="header-container">
-                            <div class="header-text">
+                        <div class="header-wrapper">
+                            <div class="company-block">
                                 <h1 class="company-name">ICE PRO SOUND & LIGHTING</h1>
-                                <div class="doc-title">ใบเบิก / ใบยืมอุปกรณ์</div>
+                                <div class="company-subtitle">บริการระบบเสียง ระบบไฟเวที และอุปกรณ์จัดงานอีเวนต์ครบวงจร</div>
+                            </div>
+                            <div class="doc-block">
+                                <div class="doc-badge">ใบเบิก / ใบยืมอุปกรณ์</div>
+                                <div class="doc-badge-en">EQUIPMENT REQUISITION FORM</div>
                             </div>
                         </div>
                         
-                        <div class="info-grid">
-                            <div>
-                                <div><strong>เลขที่เอกสาร :</strong> <span style="color: #1d4ed8; font-weight: bold; font-family: monospace;">${data.docNo || '-'}</span></div>
-                                <div><strong>ผู้รับงาน / ผู้เบิก :</strong> ${data.techName}</div>
-                                <div><strong>ผู้ขนส่งสินค้า :</strong> ${data.transporterName || '-'}</div>
-                                <div><strong>ผู้รับสินค้าหน้างาน :</strong> ${data.receiverName || '-'}</div>
-                            </div>
-                            <div>
-                                <div><strong>วันที่ทำรายการ :</strong> ${dateStr}</div>
-                                <div><strong>ไซต์งาน :</strong> ${data.jobSite}</div>
-                                <div><strong>สถานที่จัดส่ง :</strong> ${data.jobAddress || '-'}</div>
-                                ${data.jobGps ? `<div><strong>พิกัด/แผนที่ :</strong> <a href="${data.jobGps.startsWith('http') ? data.jobGps : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.jobGps)}`}" target="_blank" style="color: #2563eb; text-decoration: underline;">เปิดแผนที่ Google Maps 📍</a></div>` : ''}
+                        <div class="info-box">
+                            <div class="info-grid">
+                                <div class="info-col-left">
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 125px;">เลขที่เอกสาร :</span>
+                                        <span class="info-val" style="color: #1d4ed8; font-weight: bold; font-family: monospace;">${data.docNo || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 125px;">ผู้รับงาน / ผู้เบิก :</span>
+                                        <span class="info-val">${data.techName || data.technician || data.techFullName || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 125px;">ผู้ขนส่งสินค้า :</span>
+                                        <span class="info-val">${data.transporterName || data.techName || data.technician || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 125px;">ผู้รับสินค้าหน้างาน :</span>
+                                        <span class="info-val">${data.receiverName || data.techName || data.technician || '-'}</span>
+                                    </div>
+                                </div>
+                                <div class="info-col-right">
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 110px;">วันที่ทำรายการ :</span>
+                                        <span class="info-val">${(() => {
+                                            if (data.date) return data.date;
+                                            if (data.createdAt && data.createdAt.toDate) return data.createdAt.toDate().toLocaleDateString('th-TH');
+                                            return dateStr;
+                                        })()}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 110px;">ไซต์งาน :</span>
+                                        <span class="info-val" style="font-weight: 600; color: #111827;">${data.jobSite || data.siteName || data.site || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 110px;">สถานที่จัดส่ง :</span>
+                                        <span class="info-val">${data.jobAddress || data.deliveryAddress || data.address || data.siteAddress || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 110px;">พิกัด / แผนที่ :</span>
+                                        <span class="info-val">${(() => {
+                                            const rawGps = (data.jobGps || data.mapLink || data.gps || data.map || data.locationMap || '').trim();
+                                            if (!rawGps) return '-';
+                                            const mapHref = rawGps.startsWith('http') ? rawGps : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawGps)}`;
+                                            return `<a href="${mapHref}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 600;">เปิดแผนที่ Google Maps 📍</a>`;
+                                        })()}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <table>
                             <thead>
                                 <tr>
-                                    <th width="8%">ลำดับ</th>
-                                    <th width="67%">รายการอุปกรณ์</th>
-                                    <th width="10%">จำนวน</th>
-                                    <th width="15%">หมายเหตุ</th>
+                                    <th style="width: 6%;">ลำดับ</th>
+                                    <th style="width: 64%; text-align: center;">รายการอุปกรณ์</th>
+                                    <th style="width: 15%; text-align: center;">จำนวน</th>
+                                    <th style="width: 15%; text-align: center;">หมายเหตุ</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1552,21 +1720,30 @@
                             </tbody>
                         </table>
 
+                        <div class="terms-box">
+                            <div class="terms-title">📋 เงื่อนไขและข้อกำหนดการเบิก-ยืมอุปกรณ์:</div>
+                            <div>1. กรุณาตรวจนับจำนวนและสภาพอุปกรณ์ให้ถูกต้องครบถ้วนสมบูรณ์ก่อนนำออกจากคลังสินค้า</div>
+                            <div>2. ผู้เบิก/ยืมต้องดูแลรักษาอุปกรณ์ให้อยู่ในสภาพพร้อมใช้งาน และนำส่งคืนตามกำหนดเวลาในสภาพเดิม</div>
+                        </div>
+
                         <div class="signatures">
                             <div class="sig-box">
                                 <div class="sig-line"></div>
-                                <p>( ${data.techName || '.............................................'} )</p>
-                    <p><strong>ผู้สั่งงาน/ผู้เบิก / ผู้ยืม</strong></p>
+                                <p class="sig-name">( ${data.techName || data.technician || '.............................................'} )</p>
+                                <p class="sig-title">ผู้สั่งงาน / ผู้เบิก / ผู้ยืม</p>
+                                <p class="sig-date">วันที่ ......./......./.......</p>
                             </div>
                             <div class="sig-box">
                                 <div class="sig-line"></div>
-                                <p>( ${data.approverName || '.............................................'} )</p>
-                                <p><strong>ผู้อนุมัติ</strong></p>
+                                <p class="sig-name">( ${data.approverName || '.............................................'} )</p>
+                                <p class="sig-title">ผู้อนุมัติ</p>
+                                <p class="sig-date">วันที่ ......./......./.......</p>
                             </div>
                             <div class="sig-box">
                                 <div class="sig-line"></div>
-                                <p>( ${data.issuerName || '.............................................'} )</p>
-                                <p><strong>ผู้ให้เบิก / ผู้จ่ายสินค้า</strong></p>
+                                <p class="sig-name">( ${data.issuerName || '.............................................'} )</p>
+                                <p class="sig-title">ผู้ให้เบิก / ผู้จ่ายสินค้า</p>
+                                <p class="sig-date">วันที่ ......./......./.......</p>
                             </div>
                         </div>
                     </div>
@@ -1575,33 +1752,12 @@
             `;
             printWindow.document.write(htmlContent);
             printWindow.document.close();
-            
-            // [LILIN'S SURGICAL INSERT] : เปลี่ยนจาก setTimeout เป็น onload เพื่อให้ปริ้นท์เด้ง 100% ไม่สะดุด
-            printWindow.onload = function() {
+            printWindow.focus();
+            setTimeout(() => {
                 printWindow.print();
-            };
+            }, 600);
         }
 
-        // ==========================================
-        
-        let currentEditingDocId = null;
-        let currentEditingDocNo = null;
-
-        // 10.1 ฟังก์ชันลบใบเบิก
-        async function deleteRequisition(docId) {
-            if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบใบเบิกนี้? ข้อมูลจะถูกลบถาวร!')) {
-                try {
-                    await db.collection('requisitions').doc(docId).delete();
-                    alert('✅ ลบข้อมูลสำเร็จ!');
-                    loadReportData(); // โหลดหน้าตารางใหม่
-                } catch (error) {
-                    console.error("Error deleting document: ", error);
-                    alert('❌ ลบข้อมูลไม่สำเร็จ: ' + error.message);
-                }
-            }
-        }
-
-        // 10.1.5 สั่งพิมพ์รายงานจากตาราง (ดึงจาก Firebase แล้วส่งไป A4 แนวนอน)
         async function printRequisition(docId) {
             try {
                 const doc = await db.collection('requisitions').doc(docId).get();
@@ -1700,24 +1856,40 @@
                 // [LILIN'S SURGICAL INSERT - PHASE 5] : กำหนดเลขที่เอกสาร Auto-DocNo
                 const reqDocNo = currentEditingDocId ? (typeof currentEditingDocNo !== 'undefined' && currentEditingDocNo ? currentEditingDocNo : generateRequisitionDocNo()) : generateRequisitionDocNo();
 
-                // สร้างข้อมูลสำหรับบันทึก (แพ็คข้อมูล Auto-Populate เข้าไปด้วย)
+                // สร้างข้อมูลสำหรับบันทึก (แพ็คข้อมูล Auto-Populate พร้อมจับคู่ชื่อตัวแปรข้ามระบบแบบสมบูรณ์ 100%)
                 const requisitionData = {
                     docNo: reqDocNo,
+                    // ข้อมูลช่าง / ผู้เบิก
                     techName: techName,
+                    technician: techName,
                     techAuthPin: techPin, 
                     techFullName: populatedData.techFullName || "ระบุเอง",
                     techRole: populatedData.techRole || "ระบุเอง",
                     
+                    // ข้อมูลผู้อนุมัติ / ผู้จ่าย / ผู้ขนส่ง / ผู้รับ
                     approverName: approverName,
                     issuerName: issuerName,
-                    
-                    jobSite: jobSite,
-                    jobAddress: populatedData.jobAddress || "ระบุเอง",
-                    jobContact: populatedData.jobContact || "ระบุเอง",
-                    jobSale: populatedData.jobSale || "ระบุเอง",
-                    jobGps: populatedData.jobGps || "",
                     transporterName: transporterName,
                     receiverName: receiverName,
+                    
+                    // ข้อมูลไซต์งานและสถานที่จัดส่ง (บันทึกทุกคีย์เพื่อให้ทุกฟังก์ชันและทุกรายงานดึงไปใช้ได้ทันที)
+                    jobSite: jobSite,
+                    siteName: jobSite,
+                    site: jobSite,
+
+                    jobAddress: populatedData.jobAddress || "ระบุเอง",
+                    deliveryAddress: populatedData.jobAddress || "ระบุเอง",
+                    address: populatedData.jobAddress || "ระบุเอง",
+
+                    jobContact: populatedData.jobContact || "ระบุเอง",
+                    contact: populatedData.jobContact || "ระบุเอง",
+
+                    jobSale: populatedData.jobSale || "ระบุเอง",
+                    sales: populatedData.jobSale || "ระบุเอง",
+
+                    jobGps: populatedData.jobGps || "",
+                    mapLink: populatedData.jobGps || "",
+                    gps: populatedData.jobGps || "",
 
                     items: cart,
                     totalItems: cart.reduce((sum, item) => sum + item.qty, 0),
@@ -1735,33 +1907,55 @@
                 } else {
                     requisitionData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     await db.collection('requisitions').add(requisitionData);
-                    alert(`✅ บันทึกใบเบิกสำเร็จ!\nเลขที่: ${reqDocNo}\nผู้เบิก: ${techName}\nผู้อนุมัติ: ${approverName}\nไซต์งาน: ${requisitionData.jobSite}`);
                     
-                    // [LILIN'S SURGICAL INSERT] : ตัดสต๊อกอัตโนมัติ (เฉพาะตอนสร้างใบเบิกใหม่)
-                    cart.forEach(item => {
-                        db.collection("inventory").where("name", "==", item.name).get()
-                        .then((querySnapshot) => {
-                            querySnapshot.forEach((doc) => {
-                                db.collection("inventory").doc(doc.id).update({
-                                    stock: firebase.firestore.FieldValue.increment(-item.qty)
-                                });
+                    // [SURGICAL UPDATE] : ตัดสต๊อกอัตโนมัติ และบันทึกประวัติความเคลื่อนไหวลง Stock Card แบบ Async/Await 100%
+                    for (const item of cart) {
+                        try {
+                            const querySnapshot = await db.collection("inventory").where("name", "==", item.name).get();
+                            if (!querySnapshot.empty) {
+                                for (const invDoc of querySnapshot.docs) {
+                                    await db.collection("inventory").doc(invDoc.id).update({
+                                        stock: firebase.firestore.FieldValue.increment(-item.qty),
+                                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                    });
 
-                                // [LILIN'S SURGICAL INSERT - PHASE 4 & 5] : บันทึกประวัติความเคลื่อนไหวลง Stock Card แบบละเอียด
-                                db.collection("stock_card").add({
+                                    await db.collection("stock_card").add({
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                        docNo: reqDocNo,
+                                        sku: invDoc.data().sku || '-',
+                                        name: item.name,
+                                        category: invDoc.data().category || 'ทั่วไป',
+                                        cost: invDoc.data().cost || 0,
+                                        price: invDoc.data().priceRetail || 0,
+                                        type: 'เบิกใช้งาน',
+                                        changeQty: -item.qty,
+                                        operator: techName,
+                                        site: jobSite,
+                                        address: requisitionData.jobAddress || '',
+                                        note: "ไซต์งาน: " + jobSite
+                                    });
+                                }
+                            } else {
+                                await db.collection("stock_card").add({
                                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                                     docNo: reqDocNo,
-                                    sku: doc.data().sku || '-',
+                                    sku: item.sku || '-',
                                     name: item.name,
-                                    category: doc.data().category || 'ทั่วไป',
+                                    category: 'ทั่วไป',
                                     type: 'เบิกใช้งาน',
                                     changeQty: -item.qty,
                                     operator: techName,
                                     site: jobSite,
+                                    address: requisitionData.jobAddress || '',
                                     note: "ไซต์งาน: " + jobSite
                                 });
-                            });
-                        });
-                    });
+                            }
+                        } catch (itemErr) {
+                            console.error("Stock cut error for item:", item.name, itemErr);
+                        }
+                    }
+
+                    alert(`✅ บันทึกใบเบิกสำเร็จ!\nเลขที่: ${reqDocNo}\nผู้เบิก: ${techName}\nผู้อนุมัติ: ${approverName}\nไซต์งาน: ${requisitionData.jobSite}`);
                 }
                 
                 // รีเฟรชตารางถ้าย้ายไปหน้า Dashboard/Report แล้ว (เผื่อมีการแก้ไขแล้วปิด modal)
@@ -1769,9 +1963,10 @@
                     loadReportData();
                 }
 
-                // สั่งพิมพ์บิล A4 ทันที
-                printRequisitionA4(requisitionData, cart);
+                // สั่งพิมพ์บิล A4 ทันที (ส่ง snapshot ของ cart ไปก่อนล้าง)
+                const itemsToPrint = [...cart];
                 cart = [];
+                printRequisitionA4(requisitionData, itemsToPrint);
                 document.getElementById('techName').value = '';
                 document.getElementById('techPin').value = '';
                 document.getElementById('jobSite').value = '';
@@ -1794,14 +1989,147 @@
         // ==========================================
         // 📊 ระบบ Dashboard และ Navigation
         // ==========================================
-        function showDashboard() {
+        
+        // ========================================================
+        // 🧭 CONTINUOUS NAVIGATION CONTROLLER SUITE (WALKTHROUGH)
+        // ========================================================
+        const IndexNavigator = {
+            history: [{ type: 'section', id: 'storeSection', title: 'งานช่าง (เบิก/ยืม)' }],
+            currentIndex: 0,
+
+            pushState(state) {
+                if (!state || !state.type || !state.id) return;
+                const current = this.history[this.currentIndex];
+                if (current && current.type === state.type && current.id === state.id) return;
+                if (this.currentIndex < this.history.length - 1) {
+                    this.history = this.history.slice(0, this.currentIndex + 1);
+                }
+                this.history.push(state);
+                this.currentIndex = this.history.length - 1;
+                this.updateUI();
+            },
+
+            closeAllModals() {
+                const modals = ['cartModal', 'scannerModal', 'itemModal'];
+                modals.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.add('hidden');
+                });
+            },
+
+            getOpenModal() {
+                const modals = ['cartModal', 'scannerModal', 'itemModal'];
+                for (const id of modals) {
+                    const el = document.getElementById(id);
+                    if (el && !el.classList.contains('hidden')) return id;
+                }
+                return null;
+            },
+
+            back() {
+                const openModal = this.getOpenModal();
+                if (openModal) {
+                    this.closeAllModals();
+                    this.updateUI();
+                    return;
+                }
+                if (this.currentIndex > 0) {
+                    this.currentIndex--;
+                    this.applyState(this.history[this.currentIndex]);
+                }
+                this.updateUI();
+            },
+
+            forward() {
+                if (this.currentIndex < this.history.length - 1) {
+                    this.currentIndex++;
+                    this.applyState(this.history[this.currentIndex]);
+                }
+                this.updateUI();
+            },
+
+            home() {
+                this.closeAllModals();
+                this.pushState({ type: 'section', id: 'storeSection', title: 'งานช่าง (เบิก/ยืม)' });
+                showStore(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this.updateUI();
+            },
+
+            applyState(state) {
+                if (!state) return;
+                if (state.type === 'section') {
+                    this.closeAllModals();
+                    if (state.id === 'storeSection') showStore(false);
+                    else if (state.id === 'dashboardSection') showDashboard(false);
+                    else if (state.id === 'reportSection') showReport(false);
+                } else if (state.type === 'modal') {
+                    const el = document.getElementById(state.id);
+                    if (el) el.classList.remove('hidden');
+                }
+            },
+
+            updateUI() {
+                const canBack = (this.getOpenModal() !== null) || (this.currentIndex > 0);
+                const canForward = this.currentIndex < this.history.length - 1;
+
+                const btnBack = document.getElementById('btnNavBack');
+                const btnForward = document.getElementById('btnNavForward');
+                if (btnBack) {
+                    btnBack.disabled = !canBack;
+                    btnBack.style.opacity = canBack ? '1' : '0.35';
+                    btnBack.style.cursor = canBack ? 'pointer' : 'not-allowed';
+                }
+                if (btnForward) {
+                    btnForward.disabled = !canForward;
+                    btnForward.style.opacity = canForward ? '1' : '0.35';
+                    btnForward.style.cursor = canForward ? 'pointer' : 'not-allowed';
+                }
+
+                const btnMobDockBack = document.getElementById('btnMobNavBack');
+                const btnMobDockForward = document.getElementById('btnMobNavForward');
+                if (btnMobDockBack) {
+                    btnMobDockBack.disabled = !canBack;
+                    btnMobDockBack.style.opacity = canBack ? '1' : '0.35';
+                }
+                if (btnMobDockForward) {
+                    btnMobDockForward.disabled = !canForward;
+                    btnMobDockForward.style.opacity = canForward ? '1' : '0.35';
+                }
+            }
+        };
+
+        window.navigateBack = function() { IndexNavigator.back(); };
+        window.navigateForward = function() { IndexNavigator.forward(); };
+        window.navigateHome = function() { IndexNavigator.home(); };
+
+        window.addEventListener('keydown', function(e) {
+            if (e.altKey && e.key === 'ArrowLeft') {
+                e.preventDefault();
+                navigateBack();
+            } else if (e.altKey && e.key === 'ArrowRight') {
+                e.preventDefault();
+                navigateForward();
+            } else if (e.altKey && (e.key === 'Home' || e.key === 'h' || e.key === 'H')) {
+                e.preventDefault();
+                navigateHome();
+            }
+        });
+
+        function showDashboard(pushHistory = true) {
+            if (pushHistory && typeof IndexNavigator !== 'undefined') {
+                IndexNavigator.pushState({ type: 'section', id: 'dashboardSection', title: 'แดชบอร์ด' });
+            }
             document.getElementById('storeSection').classList.add('hidden');
             document.getElementById('staffSection').classList.add('hidden');
             document.getElementById('reportSection').classList.add('hidden');
             document.getElementById('dashboardSection').classList.remove('hidden');
         }
 
-        function showReport() {
+        function showReport(pushHistory = true) {
+            if (pushHistory && typeof IndexNavigator !== 'undefined') {
+                IndexNavigator.pushState({ type: 'section', id: 'reportSection', title: 'รายงาน' });
+            }
             document.getElementById('storeSection').classList.add('hidden');
             document.getElementById('staffSection').classList.add('hidden');
             document.getElementById('dashboardSection').classList.add('hidden');
@@ -1819,7 +2147,10 @@
             loadInventoryData(); 
         }
 
-        function showStore() {
+        function showStore(pushHistory = true) {
+            if (pushHistory && typeof IndexNavigator !== 'undefined') {
+                IndexNavigator.pushState({ type: 'section', id: 'storeSection', title: 'งานช่าง (เบิก/ยืม)' });
+            }
             document.getElementById('dashboardSection').classList.add('hidden');
             document.getElementById('staffSection').classList.add('hidden');
             document.getElementById('reportSection').classList.add('hidden');
@@ -1865,14 +2196,14 @@
                             <td class="px-6 py-4 text-slate-300">${dateStr}</td>
                             <td class="px-6 py-4">
                                 <div class="text-xs font-mono font-bold text-emerald-400 mb-0.5">${data.docNo || '-'}</div>
-                                <div class="font-bold text-[15px] text-blue-300">${data.techName}</div>
-                                <div class="text-[13px] text-slate-400">${data.techFullName}</div>
+                                <div class="font-bold text-[15px] text-blue-300">${data.techName || data.technician || '-'}</div>
+                                <div class="text-[13px] text-slate-400">${data.techFullName || '-'}</div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-[15px] text-white">${data.jobSite}</div>
-                                <div class="text-[13px] text-slate-400">${data.jobAddress.substring(0, 30)}...</div>
+                                <div class="text-[15px] text-white">${data.jobSite || data.siteName || data.site || '-'}</div>
+                                <div class="text-[13px] text-slate-400">${(data.jobAddress || data.deliveryAddress || data.address || '-').substring(0, 30)}...</div>
                             </td>
-                            <td class="px-6 py-4 text-[15px] text-slate-300">${data.jobSale}</td>
+                            <td class="px-6 py-4 text-[15px] text-slate-300">${data.jobSale || data.sales || '-'}</td>
                             <td class="px-6 py-4 text-center text-lg font-bold text-white">${data.totalItems}</td>
                             <td class="px-6 py-4 text-center">${statusBadge}</td>
                             <td class="px-6 py-4 text-center space-x-2">
@@ -2792,6 +3123,19 @@
         updateCartUI();
         loadUnitList();
     </script>
+    <!-- 📱 MOBILE & TABLET FLOATING NAVIGATION BAR (BOTTOM DOCK) -->
+    <div id="mobileQuickNav" class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 glass-panel border border-slate-600/70 rounded-full px-4 py-2 shadow-2xl flex items-center gap-2 bg-slate-900/95 backdrop-blur-md no-print">
+        <button type="button" onclick="navigateBack()" id="btnMobNavBack" class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 text-slate-200 active:scale-90 flex items-center justify-center text-sm disabled:opacity-30 transition" disabled title="ถอยหลัง (Back)">
+            ◀
+        </button>
+        <button type="button" onclick="navigateHome()" id="btnMobNavHome" class="px-4 h-10 rounded-full bg-blue-600/90 hover:bg-blue-500 text-white font-semibold text-xs active:scale-90 flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/30 transition" title="กลับหน้าแรก">
+            <span>🏠</span> <span>Home</span>
+        </button>
+        <button type="button" onclick="navigateForward()" id="btnMobNavForward" class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 text-slate-200 active:scale-90 flex items-center justify-center text-sm disabled:opacity-30 transition" disabled title="เดินหน้า (Forward)">
+            ▶
+        </button>
+    </div>
+
 </body>
 </html>
 
