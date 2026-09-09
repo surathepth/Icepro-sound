@@ -104,6 +104,8 @@
     <!-- Firebase SDK (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- 📷 HTML5 QR CODE & BARCODE SCANNER SDK 📷 -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <!-- Firebase Configuration & Initialization -->
     <script>
@@ -143,9 +145,10 @@
                 </button>
         </div>
         <div class="flex items-center space-x-2">
-            <!-- ปุ่มสแกน QR Code สำหรับมือถือ -->
-            <button class="md:hidden bg-gray-700 hover:bg-gray-600 p-2 rounded text-white ice-glow transition">
-                🔳 Scan
+            <!-- ปุ่มสแกน QR Code / Barcode สำหรับมือถือ -->
+            <button type="button" onclick="openScannerModal()" class="md:hidden bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-white font-semibold text-sm ice-glow transition flex items-center gap-1.5 shadow-lg" title="เปิดกล้องสแกน QR Code / Barcode">
+                <span class="text-base">📷</span>
+                <span>Scan</span>
             </button>
             <span class="text-sm text-gray-400 hidden sm:inline">ผู้ใช้งาน: Boss Thep-Apai</span>
         </div>
@@ -357,20 +360,7 @@
                 <span class="text-[10px] mt-1 font-bold">เบิกอุปกรณ์</span>
             </button>
             
-            <!-- 4. ตั้งค่า (Dropdown แบบ Desktop) -->
-            <div class="flex-1 relative">
-                <button onclick="toggleSettingsMenuMobile()" class="flex flex-col items-center p-2 text-gray-400 hover:text-blue-400 transition w-full">
-                    <span class="text-xl">⚙️</span>
-                    <span class="text-[10px] mt-1 flex items-center gap-1 justify-center">ตั้งค่า <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></span>
-                </button>
-                
-                <!-- Dropdown Menu (จะเปิดขึ้นมาด้านบน) -->
-                <div id="settingsDropdownMobile" class="absolute bottom-full right-0 mb-2 w-40 bg-gray-800 rounded-md shadow-lg py-1 z-[100] hidden border border-gray-700">
-                    <button onclick="showInventory(); toggleSettingsMenuMobile()" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">📦 คลังสินค้า</button>
-                    <button onclick="toggleSettingsMenuMobile()" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">👥 ลูกค้า</button>
-                    <button onclick="showStaff(); toggleSettingsMenuMobile()" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition">🧑‍🔧 ตั้งค่าพนักงาน</button>
-                </div>
-            </div>
+
         </div>
     </nav>
 
@@ -481,6 +471,7 @@
                             <p><strong>📍 สถานที่:</strong> <span id="infoJobAddress">-</span></p>
                             <p><strong>📞 ติดต่อ:</strong> <span id="infoJobContact">-</span></p>
                             <p><strong>👔 เซลล์:</strong> <span id="infoJobSale">-</span></p>
+                            <p><strong>🗺️ พิกัด/แผนที่:</strong> <span id="infoJobGps">-</span></p>
                         </div>
                     </div>
                 </div>
@@ -503,6 +494,51 @@
         </div>
     </div>
 
+        </div>
+    </div>
+
+    <!-- 📷 QR CODE & BARCODE SCANNER MODAL (โมดอลเปิดกล้องสแกนบาร์โค้ด) 📷 -->
+    <div id="scannerModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[120] hidden items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md rounded-2xl border border-slate-600 p-5 space-y-4 shadow-2xl flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">📷</span>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">สแกน QR Code / Barcode</h3>
+                        <p class="text-xs text-slate-400">ส่องกล้องไปยังรหัสบนอุปกรณ์เพื่อเพิ่มลงตะกร้า</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeScannerModal()" class="text-slate-400 hover:text-white text-2xl font-bold p-1">&times;</button>
+            </div>
+
+            <!-- Viewport for camera -->
+            <div class="relative bg-black rounded-xl overflow-hidden min-h-[260px] flex items-center justify-center border border-slate-700">
+                <div id="scannerViewport" class="w-full"></div>
+                <div id="scannerLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-slate-300 text-sm gap-2">
+                    <div class="animate-spin h-8 w-8 border-3 border-blue-500 border-t-transparent rounded-full"></div>
+                    <span>กำลังเชื่อมต่อกล้อง...</span>
+                </div>
+            </div>
+
+            <!-- Feedback / Result alert -->
+            <div id="scannerFeedback" class="hidden text-center text-sm py-2 px-3 rounded-lg font-medium"></div>
+
+            <!-- Manual input fallback -->
+            <div class="flex gap-2">
+                <input type="text" id="manualBarcodeInput" onkeydown="if(event.key==='Enter'){event.preventDefault();handleManualBarcode();}" placeholder="หรือพิมพ์รหัส SKU / บาร์โค้ด..." class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none">
+                <button type="button" onclick="handleManualBarcode()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition">ค้นหา</button>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex justify-between items-center pt-2 border-t border-slate-700 text-xs text-slate-400">
+                <button type="button" onclick="switchScannerCamera()" id="switchCameraBtn" class="hover:text-white flex items-center gap-1 transition">
+                    🔄 สลับกล้อง
+                </button>
+                <button type="button" onclick="closeScannerModal()" class="px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
         </div>
     </div>
 
@@ -642,17 +678,24 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm text-gray-400 mb-1">จำนวนคงเหลือเริ่มต้น <span class="text-red-400">*</span></label>
-                            <input type="number" id="invStock" required min="0" class="w-full bg-gray-900/50 border border-gray-600 rounded p-2 text-white focus:border-blue-500 outline-none" placeholder="0">
+                            <input type="number" id="invStock" required min="0" onfocus="if(this.value==='0') this.value=''; this.select();" onblur="if(this.value==='') this.value='0';" class="w-full bg-gray-900/50 border border-gray-600 rounded p-2 text-white focus:border-blue-500 outline-none" placeholder="0">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-400 mb-1">หน่วยนับ <span class="text-red-400">*</span></label>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-sm text-gray-400 font-medium">หน่วยนับ <span class="text-red-400">*</span></label>
+                                <button type="button" onclick="quickAddUnitPrompt()" class="text-xs text-purple-400 hover:text-purple-300 font-medium transition flex items-center gap-0.5" title="เพิ่มหน่วยนับใหม่">
+                                    ➕ เพิ่มหน่วย
+                                </button>
+                            </div>
                             <select id="invUnit" required class="w-full bg-gray-900/50 border border-gray-600 rounded p-2 text-white focus:border-blue-500 outline-none">
-                                <option value="ตัว">ตัว (ย่อย)</option>
-                                <option value="ชิ้น">ชิ้น (เล็ก)</option>
-                                <option value="เส้น">เส้น</option>
-                                <option value="กล่อง">กล่อง</option>
-                                <option value="ลัง">ลัง (ใหญ่)</option>
+                                <option value="ชิ้น">ชิ้น</option>
+                                <option value="ตัว">ตัว</option>
                                 <option value="ชุด">ชุด</option>
+                                <option value="กล่อง">กล่อง</option>
+                                <option value="ลัง">ลัง</option>
+                                <option value="ม้วน">ม้วน</option>
+                                <option value="เมตร">เมตร</option>
+                                <option value="เส้น">เส้น</option>
                             </select>
                         </div>
                         <div>
@@ -809,7 +852,7 @@
                     <div class="overflow-x-auto rounded-lg border border-gray-700 print:border-none print:mt-4">
                         <table class="w-full text-left text-sm text-slate-200">
                             <thead class="bg-slate-700/90 text-slate-100 font-bold border-b border-gray-600">
-                                <tr>
+                                <tr class="whitespace-nowrap">
                                     <th class="px-6 py-3">ชื่อ - นามสกุล</th>
                                     <th class="px-6 py-3">ตำแหน่ง</th>
                                     <th class="px-6 py-3">เบอร์โทร / ไลน์</th>
@@ -928,11 +971,11 @@
                             <div class="flex items-center gap-2">
                                 <div class="flex items-center space-x-2 bg-slate-900 rounded border border-slate-700 overflow-hidden shadow-sm">
                                     <!-- ปุ่มลด -->
-                                    <button type="button" onclick="this.nextElementSibling.stepDown()" class="w-8 h-8 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold border-r border-slate-700">-</button>
-                                    <!-- ช่องใส่ตัวเลข (ซ่อน Spinner ถาวร) -->
-                                    <input type="number" data-product-name="${product.name}" class="w-16 bg-transparent text-white text-center font-bold focus:outline-none focus:bg-slate-800 modal-qty-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value="0" min="0">
+                                    <button type="button" onclick="const inp=this.nextElementSibling; if(!inp.value) inp.value=0; inp.stepDown();" class="w-8 h-8 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold border-r border-slate-700">-</button>
+                                    <!-- ช่องใส่ตัวเลข (เลข 0 หายทันทีเมื่อคลิก/จิ้ม พร้อมคีย์ตัวเลขใหม่ได้ทันที) -->
+                                    <input type="number" data-product-name="${product.name}" onfocus="if(this.value==='0') this.value=''; this.select();" onblur="if(this.value==='' || isNaN(this.value)) this.value='0';" class="w-16 bg-transparent text-white text-center font-bold focus:outline-none focus:bg-slate-800 modal-qty-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value="0" min="0">
                                     <!-- ปุ่มเพิ่ม -->
-                                    <button type="button" onclick="this.previousElementSibling.stepUp()" class="w-8 h-8 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold border-l border-slate-700">+</button>
+                                    <button type="button" onclick="const inp=this.previousElementSibling; if(!inp.value) inp.value=0; inp.stepUp();" class="w-8 h-8 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold border-l border-slate-700">+</button>
                                 </div>
                             </div>
                             </div>
@@ -1091,7 +1134,7 @@
                         <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
                             <div class="flex items-center space-x-2 bg-gray-900 rounded-lg p-1 border border-gray-700">
                                 <button onclick="decreaseQty(${index})" class="w-8 h-8 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center transition">-</button>
-                                <input type="number" min="1" value="${item.qty}" onchange="updateCartItemQty(${index}, this.value)" class="w-16 h-8 text-center bg-gray-800 text-white font-bold border border-gray-600 rounded focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                                <input type="number" min="1" value="${item.qty}" onfocus="this.select();" onblur="if(!this.value || parseInt(this.value)<1) { this.value = ${item.qty}; updateCartItemQty(${index}, ${item.qty}); }" onchange="updateCartItemQty(${index}, this.value)" class="w-16 h-8 text-center bg-gray-800 text-white font-bold border border-gray-600 rounded focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                                 <button onclick="increaseQty(${index})" class="w-8 h-8 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center transition">+</button>
                             </div>
                             <button onclick="removeFromCart(${index})" class="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded transition" title="ลบรายการนี้">
@@ -1166,12 +1209,43 @@
             }
         }
 
+        // [LILIN'S SURGICAL INSERT - PHASE 5] : ดึงข้อมูลลูกค้าและไซต์งานจาก Firebase มาใส่ Datalist
+        async function loadCustomersListForCart() {
+            try {
+                const snapshot = await db.collection('customers').orderBy('site').get();
+                if (snapshot.empty) return;
+                
+                let optionsHtml = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const siteName = data.site || data.name;
+                    if (siteName) {
+                        optionsHtml += `<option value="${siteName}">\n`;
+                        masterJobData[siteName] = {
+                            address: data.address || '-',
+                            contact: `${data.name || ''} ${data.phone ? 'โทร: ' + data.phone : ''}`,
+                            sale: data.lineId ? `LINE: ${data.lineId}` : 'ฝ่ายขาย/ประสานงาน',
+                            gps: data.gps || ''
+                        };
+                    }
+                });
+                
+                const jobList = document.getElementById('jobSitesList');
+                if (jobList) {
+                    jobList.innerHTML = optionsHtml;
+                }
+            } catch (error) {
+                console.error("Error loading customers for cart datalist:", error);
+            }
+        }
+
         // 7. เปิดป๊อปอัปตะกร้า
         function openCartModal() {
             const modal = document.getElementById('cartModal');
             const modalContent = document.getElementById('cartModalContent');
             updateCartUI();
             loadStaffListForCart(); // เรียกฟังก์ชันดึงชื่อพนักงานทุกครั้งที่เปิดตะกร้า
+            loadCustomersListForCart(); // [PHASE 5] ดึงข้อมูลไซต์งานและ GPS ลูกค้า
             
             modal.classList.remove('hidden');
             // สำคัญ! เปลี่ยนเป็น flex เพื่อให้ slide-over ชิดขวา
@@ -1225,10 +1299,21 @@
             "J03": { address: "พารากอนฮอลล์", contact: "คุณแนน 083-555-6666", sale: "ฝ่ายขาย A" }
         };
 
+        // [LILIN'S SURGICAL INSERT - PHASE 5] : ฟังก์ชันสร้างเลขที่เอกสารอัตโนมัติ (REQ-YYYYMMDD-XXXX)
+        function generateRequisitionDocNo() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const timeCode = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+            const rand = Math.floor(100 + Math.random() * 900);
+            return `REQ-${y}${m}${d}-${timeCode}${rand}`;
+        }
+
         // ตัวแปรเก็บข้อมูลที่ถูกดึงมา (เตรียมส่งเข้า Firebase)
         let populatedData = {
             techFullName: "", techRole: "",
-            jobAddress: "", jobContact: "", jobSale: ""
+            jobAddress: "", jobContact: "", jobSale: "", jobGps: ""
         };
 
         // ฟังก์ชันอัปเดต Info Card
@@ -1258,23 +1343,46 @@
                 populatedData.techRole = "";
             }
 
-            // ตรวจสอบข้อมูลไซต์งาน
+            // ตรวจสอบข้อมูลไซต์งาน (รองรับทั้ง Key รหัส J01 และชื่อไซต์งาน/ลูกค้า)
+            let foundJob = null;
             if (jobIdMatch && masterJobData[jobIdMatch[0].toUpperCase()]) {
-                const data = masterJobData[jobIdMatch[0].toUpperCase()];
-                document.getElementById('infoJobAddress').textContent = data.address;
-                document.getElementById('infoJobContact').textContent = data.contact;
-                document.getElementById('infoJobSale').textContent = data.sale;
-                populatedData.jobAddress = data.address;
-                populatedData.jobContact = data.contact;
-                populatedData.jobSale = data.sale;
+                foundJob = masterJobData[jobIdMatch[0].toUpperCase()];
+            } else if (masterJobData[jobInput]) {
+                foundJob = masterJobData[jobInput];
+            } else if (jobInput.length >= 2) {
+                const foundKey = Object.keys(masterJobData).find(k => k.toLowerCase().includes(jobInput.toLowerCase()));
+                if (foundKey) foundJob = masterJobData[foundKey];
+            }
+
+            if (foundJob) {
+                document.getElementById('infoJobAddress').textContent = foundJob.address || '-';
+                document.getElementById('infoJobContact').textContent = foundJob.contact || '-';
+                document.getElementById('infoJobSale').textContent = foundJob.sale || '-';
+                populatedData.jobAddress = foundJob.address || '';
+                populatedData.jobContact = foundJob.contact || '';
+                populatedData.jobSale = foundJob.sale || '';
+                populatedData.jobGps = foundJob.gps || '';
+
+                const gpsEl = document.getElementById('infoJobGps');
+                if (gpsEl) {
+                    if (foundJob.gps) {
+                        const mapUrl = foundJob.gps.startsWith('http') ? foundJob.gps : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(foundJob.gps)}`;
+                        gpsEl.innerHTML = `<a href="${mapUrl}" target="_blank" class="text-blue-300 hover:text-white underline font-semibold flex items-center gap-1">📍 เปิดดูใน Google Maps</a>`;
+                    } else {
+                        gpsEl.textContent = '-';
+                    }
+                }
                 hasJobData = true;
             } else {
                 document.getElementById('infoJobAddress').textContent = "-";
                 document.getElementById('infoJobContact').textContent = "-";
                 document.getElementById('infoJobSale').textContent = "-";
+                const gpsEl = document.getElementById('infoJobGps');
+                if (gpsEl) gpsEl.textContent = "-";
                 populatedData.jobAddress = "";
                 populatedData.jobContact = "";
                 populatedData.jobSale = "";
+                populatedData.jobGps = "";
             }
 
             // แสดงกล่องข้อมูลถ้ามีข้อมูลอย่างน้อย 1 อย่าง
@@ -1417,13 +1525,16 @@
                         
                         <div class="info-grid">
                             <div>
-                                <div><strong>ผู้รับงาน :</strong> ${data.techName}</div>
-                                            <div><strong>ผู้ขนส่งสินค้า :</strong> </div>
-                                            <div><strong>ผู้รับสินค้า :</strong> </div>
+                                <div><strong>เลขที่เอกสาร :</strong> <span style="color: #1d4ed8; font-weight: bold; font-family: monospace;">${data.docNo || '-'}</span></div>
+                                <div><strong>ผู้รับงาน / ผู้เบิก :</strong> ${data.techName}</div>
+                                <div><strong>ผู้ขนส่งสินค้า :</strong> ${data.transporterName || '-'}</div>
+                                <div><strong>ผู้รับสินค้าหน้างาน :</strong> ${data.receiverName || '-'}</div>
                             </div>
                             <div>
-                                <div><strong>วันที่ทำรายการ:</strong> ${dateStr}</div>
-                                <div><strong>ไซต์งาน:</strong> ${data.jobSite}</div>
+                                <div><strong>วันที่ทำรายการ :</strong> ${dateStr}</div>
+                                <div><strong>ไซต์งาน :</strong> ${data.jobSite}</div>
+                                <div><strong>สถานที่จัดส่ง :</strong> ${data.jobAddress || '-'}</div>
+                                ${data.jobGps ? `<div><strong>พิกัด/แผนที่ :</strong> <a href="${data.jobGps.startsWith('http') ? data.jobGps : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.jobGps)}`}" target="_blank" style="color: #2563eb; text-decoration: underline;">เปิดแผนที่ Google Maps 📍</a></div>` : ''}
                             </div>
                         </div>
 
@@ -1474,6 +1585,7 @@
         // ==========================================
         
         let currentEditingDocId = null;
+        let currentEditingDocNo = null;
 
         // 10.1 ฟังก์ชันลบใบเบิก
         async function deleteRequisition(docId) {
@@ -1544,6 +1656,7 @@
                 
                 // จำ ID ที่กำลังแก้ไข
                 currentEditingDocId = docId;
+                currentEditingDocNo = data.docNo || null;
                 
                 // เปิดตะกร้าเพื่อให้แก้ไข
                 openCartModal();
@@ -1584,8 +1697,12 @@
             spinner.classList.remove('hidden');
 
             try {
+                // [LILIN'S SURGICAL INSERT - PHASE 5] : กำหนดเลขที่เอกสาร Auto-DocNo
+                const reqDocNo = currentEditingDocId ? (typeof currentEditingDocNo !== 'undefined' && currentEditingDocNo ? currentEditingDocNo : generateRequisitionDocNo()) : generateRequisitionDocNo();
+
                 // สร้างข้อมูลสำหรับบันทึก (แพ็คข้อมูล Auto-Populate เข้าไปด้วย)
                 const requisitionData = {
+                    docNo: reqDocNo,
                     techName: techName,
                     techAuthPin: techPin, 
                     techFullName: populatedData.techFullName || "ระบุเอง",
@@ -1598,24 +1715,27 @@
                     jobAddress: populatedData.jobAddress || "ระบุเอง",
                     jobContact: populatedData.jobContact || "ระบุเอง",
                     jobSale: populatedData.jobSale || "ระบุเอง",
-        transporterName: transporterName,
-        receiverName: receiverName,
+                    jobGps: populatedData.jobGps || "",
+                    transporterName: transporterName,
+                    receiverName: receiverName,
 
                     items: cart,
                     totalItems: cart.reduce((sum, item) => sum + item.qty, 0),
                     status: 'pending', // รอดำเนินการ
+                    returnStatus: 'ยังไม่คืน', // สถานะการคืนอุปกรณ์
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
                 // บันทึกลง Collection 'requisitions'
                 if (currentEditingDocId) {
                     await db.collection('requisitions').doc(currentEditingDocId).update(requisitionData);
-                    alert(`✅ แก้ไขใบเบิกสำเร็จ!\n\nผู้เบิก: ${techName}\nผู้อนุมัติ: ${approverName}\nไซต์งาน: ${requisitionData.jobSite}`);
+                    alert(`✅ แก้ไขใบเบิกสำเร็จ!\nเลขที่: ${reqDocNo}\nผู้เบิก: ${techName}\nผู้อนุมัติ: ${approverName}\nไซต์งาน: ${requisitionData.jobSite}`);
                     currentEditingDocId = null; // รีเซ็ตสถานะ
+                    currentEditingDocNo = null;
                 } else {
                     requisitionData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     await db.collection('requisitions').add(requisitionData);
-                    alert(`✅ บันทึกใบเบิกสำเร็จ!\n\nผู้เบิก: ${techName}\nผู้อนุมัติ: ${approverName}\nไซต์งาน: ${requisitionData.jobSite}`);
+                    alert(`✅ บันทึกใบเบิกสำเร็จ!\nเลขที่: ${reqDocNo}\nผู้เบิก: ${techName}\nผู้อนุมัติ: ${approverName}\nไซต์งาน: ${requisitionData.jobSite}`);
                     
                     // [LILIN'S SURGICAL INSERT] : ตัดสต๊อกอัตโนมัติ (เฉพาะตอนสร้างใบเบิกใหม่)
                     cart.forEach(item => {
@@ -1626,14 +1746,17 @@
                                     stock: firebase.firestore.FieldValue.increment(-item.qty)
                                 });
 
-                                // [LILIN'S SURGICAL INSERT - PHASE 4] : บันทึกประวัติความเคลื่อนไหวลง Stock Card
+                                // [LILIN'S SURGICAL INSERT - PHASE 4 & 5] : บันทึกประวัติความเคลื่อนไหวลง Stock Card แบบละเอียด
                                 db.collection("stock_card").add({
                                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                    docNo: reqDocNo,
                                     sku: doc.data().sku || '-',
                                     name: item.name,
-                                    type: 'เบิกออกหน้างาน',
+                                    category: doc.data().category || 'ทั่วไป',
+                                    type: 'เบิกใช้งาน',
                                     changeQty: -item.qty,
                                     operator: techName,
+                                    site: jobSite,
                                     note: "ไซต์งาน: " + jobSite
                                 });
                             });
@@ -1741,6 +1864,7 @@
                         <tr class="hover:bg-slate-700/50 transition whitespace-nowrap">
                             <td class="px-6 py-4 text-slate-300">${dateStr}</td>
                             <td class="px-6 py-4">
+                                <div class="text-xs font-mono font-bold text-emerald-400 mb-0.5">${data.docNo || '-'}</div>
                                 <div class="font-bold text-[15px] text-blue-300">${data.techName}</div>
                                 <div class="text-[13px] text-slate-400">${data.techFullName}</div>
                             </td>
@@ -1826,9 +1950,9 @@
                     const data = doc.data();
                     const row = `
                         <tr class="border-b border-gray-700/50 hover:bg-gray-800/50 transition">
-                            <td class="px-6 py-4 font-medium text-white">${data.name || '-'}</td>
-                            <td class="px-6 py-4"><span class="bg-gray-700 text-gray-200 px-3 py-1 rounded-full text-xs">${data.role || '-'}</span></td>
-                            <td class="px-6 py-4 text-gray-300">
+                            <td class="px-6 py-4 font-medium text-white whitespace-nowrap">${data.name || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap"><span class="bg-gray-700 text-gray-200 px-3 py-1 rounded-full text-xs">${data.role || '-'}</span></td>
+                            <td class="px-6 py-4 text-gray-300 whitespace-nowrap">
                                 <div class="flex items-center gap-1">📞 ${data.phone || '-'}</div>
                                 <div class="text-green-400 text-xs mt-1 flex items-center gap-1">💬 ${data.lineId || '-'}</div>
                             </td>
@@ -2092,6 +2216,7 @@
             document.getElementById('invProductId').value = '';
             document.getElementById('invModalTitle').innerHTML = '➕ เพิ่มสินค้าใหม่';
             document.getElementById('invBtnText').innerText = '💾 บันทึกข้อมูล';
+            syncUnitSelectDropdowns();
             document.getElementById('inventoryModal').classList.remove('hidden');
             document.getElementById('inventoryModal').classList.add('flex');
         }
@@ -2430,8 +2555,242 @@
             }
         }
 
+        // ========================================================
+        // 🌟 DYNAMIC UNITS SYNC CONTROLLER (FIREBASE 'units')
+        // ========================================================
+        let cachedUnits = [];
+        const defaultUnits = ['ชิ้น', 'ตัว', 'ชุด', 'กล่อง', 'ลัง', 'ม้วน', 'เมตร', 'เส้น'];
+
+        function escapeUnitText(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+        }
+
+        async function loadUnitList() {
+            try {
+                let snapshot = await db.collection('units').get();
+                if (snapshot.empty) {
+                    cachedUnits = defaultUnits.map((uName, idx) => ({ name: uName, order: idx + 1 }));
+                } else {
+                    cachedUnits = snapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
+                    cachedUnits.sort((a, b) => {
+                        if (typeof a.order === 'number' && typeof b.order === 'number') {
+                            return a.order - b.order;
+                        }
+                        return (a.name || '').localeCompare(b.name || '');
+                    });
+                }
+                syncUnitSelectDropdowns();
+            } catch (err) {
+                console.warn("Load units fallback to local defaults:", err);
+                cachedUnits = defaultUnits.map((uName, idx) => ({ name: uName, order: idx + 1 }));
+                syncUnitSelectDropdowns();
+            }
+        }
+
+        function syncUnitSelectDropdowns() {
+            const unitList = cachedUnits.length > 0 ? cachedUnits.map(u => u.name) : defaultUnits;
+            const invUnitEl = document.getElementById('invUnit');
+            if (invUnitEl && invUnitEl.tagName === 'SELECT') {
+                const currentVal = invUnitEl.value || 'ชิ้น';
+                let optionsHtml = '';
+                unitList.forEach(uName => {
+                    optionsHtml += `<option value="${escapeUnitText(uName)}">${escapeUnitText(uName)}</option>`;
+                });
+                if (currentVal && !unitList.includes(currentVal)) {
+                    optionsHtml += `<option value="${escapeUnitText(currentVal)}">${escapeUnitText(currentVal)}</option>`;
+                }
+                invUnitEl.innerHTML = optionsHtml;
+                invUnitEl.value = currentVal;
+            }
+        }
+
+        async function quickAddUnitPrompt() {
+            const newName = prompt("🏷️ กรุณาระบุชื่อหน่วยนับสินค้าใหม่ที่ต้องการเพิ่ม:");
+            if (!newName || !newName.trim()) return;
+            const cleanName = newName.trim();
+            if (cachedUnits.some(u => (u.name || '').toLowerCase() === cleanName.toLowerCase())) {
+                alert("⚠️ หน่วยนับนี้มีอยู่ในระบบแล้วค่ะ");
+                const invUnitEl = document.getElementById('invUnit');
+                if (invUnitEl) invUnitEl.value = cleanName;
+                return;
+            }
+            try {
+                await db.collection('units').add({
+                    name: cleanName,
+                    order: Date.now(),
+                    level: 'กำหนดเอง',
+                    isDefault: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert(`✅ เพิ่มหน่วยนับ "${cleanName}" เข้าสู่ระบบและฐานข้อมูลเรียบร้อยแล้วค่ะ!`);
+                await loadUnitList();
+                const invUnitEl = document.getElementById('invUnit');
+                if (invUnitEl) invUnitEl.value = cleanName;
+            } catch (err) {
+                console.error("Error adding unit:", err);
+                alert("❌ เกิดข้อผิดพลาดในการบันทึกหน่วยนับ: " + err.message);
+            }
+        }
+
+        // ========================================================
+        // 📷 QR CODE & BARCODE SCANNER CONTROLLER
+        // ========================================================
+        let html5QrCode = null;
+        let currentCameraFacing = "environment"; // กล้องหลังเป็นค่าเริ่มต้น
+        let lastScannedBarcode = '';
+        let lastScannedTime = 0;
+
+        async function openScannerModal() {
+            const modal = document.getElementById('scannerModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            const loading = document.getElementById('scannerLoading');
+            if (loading) loading.classList.remove('hidden');
+            showScannerFeedback('', 'none');
+            
+            if (typeof Html5Qrcode === 'undefined') {
+                alert("⚠️ ไลบรารีสแกนเนอร์กำลังโหลด กรุณารอสักครู่แล้วลองใหม่อีกครั้ง");
+                closeScannerModal();
+                return;
+            }
+            
+            try {
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("scannerViewport");
+                }
+                
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                };
+                
+                await html5QrCode.start(
+                    { facingMode: currentCameraFacing },
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                );
+                if (loading) loading.classList.add('hidden');
+            } catch (err) {
+                console.error("Camera start error:", err);
+                if (loading) loading.classList.add('hidden');
+                showScannerFeedback("⚠️ ไม่สามารถเปิดกล้องได้: " + (err.message || "กรุณาอนุญาตสิทธิ์เข้าถึงกล้อง"), "error");
+            }
+        }
+
+        async function closeScannerModal() {
+            const modal = document.getElementById('scannerModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            if (html5QrCode && html5QrCode.isScanning) {
+                try {
+                    await html5QrCode.stop();
+                } catch (e) {
+                    console.warn("Stop scanner error:", e);
+                }
+            }
+            showScannerFeedback('', 'none');
+        }
+
+        async function switchScannerCamera() {
+            if (!html5QrCode || !html5QrCode.isScanning) return;
+            currentCameraFacing = currentCameraFacing === "environment" ? "user" : "environment";
+            try {
+                await html5QrCode.stop();
+                await openScannerModal();
+            } catch (err) {
+                console.error("Switch camera error:", err);
+            }
+        }
+
+        function onScanFailure(error) {
+            // ปล่อยผ่านเพื่อให้สแกนเฟรมต่อไปอย่างเงียบๆ
+        }
+
+        async function onScanSuccess(decodedText) {
+            const now = Date.now();
+            const cleanText = (decodedText || '').trim();
+            if (!cleanText) return;
+            
+            // Cooldown 2 วินาที ป้องกันสแกนซ้ำรัวๆ
+            if (cleanText === lastScannedBarcode && (now - lastScannedTime < 2000)) {
+                return;
+            }
+            lastScannedBarcode = cleanText;
+            lastScannedTime = now;
+            
+            await processBarcodeItem(cleanText);
+        }
+
+        async function processBarcodeItem(barcode) {
+            showScannerFeedback(`🔍 กำลังค้นหารหัส: ${barcode}...`, 'info');
+            
+            try {
+                // 1. ค้นหาจาก SKU
+                let snapshot = await db.collection('inventory').where('sku', '==', barcode).limit(1).get();
+                
+                // 2. ถ้าไม่พบ ลองค้นหาจากชื่อสินค้า
+                if (snapshot.empty) {
+                    snapshot = await db.collection('inventory').where('name', '==', barcode).limit(1).get();
+                }
+                
+                if (!snapshot.empty) {
+                    const product = snapshot.docs[0].data();
+                    const productName = product.name;
+                    addToCart(productName);
+                    
+                    if (navigator.vibrate) {
+                        navigator.vibrate([100, 50, 100]);
+                    }
+                    showScannerFeedback(`✅ เพิ่ม "${productName}" ลงตะกร้าสำเร็จ!`, 'success');
+                } else {
+                    showScannerFeedback(`⚠️ ไม่พบสินค้าที่มีรหัส: "${barcode}"`, 'error');
+                }
+            } catch (err) {
+                console.error("Error searching product by barcode:", err);
+                showScannerFeedback(`❌ เกิดข้อผิดพลาดในการค้นหา: ${err.message}`, 'error');
+            }
+        }
+
+        function handleManualBarcode() {
+            const input = document.getElementById('manualBarcodeInput');
+            if (!input || !input.value.trim()) return;
+            const val = input.value.trim();
+            input.value = '';
+            processBarcodeItem(val);
+        }
+
+        function showScannerFeedback(msg, type) {
+            const el = document.getElementById('scannerFeedback');
+            if (!el) return;
+            el.classList.remove('hidden', 'bg-green-600/30', 'text-green-300', 'border-green-500', 
+                                  'bg-red-600/30', 'text-red-300', 'border-red-500', 
+                                  'bg-blue-600/30', 'text-blue-300', 'border-blue-500');
+            
+            if (type === 'none' || !msg) {
+                el.classList.add('hidden');
+                return;
+            }
+            
+            if (type === 'success') {
+                el.classList.add('bg-green-600/30', 'text-green-300', 'border', 'border-green-500');
+            } else if (type === 'error') {
+                el.classList.add('bg-red-600/30', 'text-red-300', 'border', 'border-red-500');
+            } else {
+                el.classList.add('bg-blue-600/30', 'text-blue-300', 'border', 'border-blue-500');
+            }
+            el.textContent = msg;
+        }
+
         // Initialize UI
         updateCartUI();
+        loadUnitList();
     </script>
 </body>
 </html>
