@@ -580,6 +580,9 @@
                     <button id="tabBtnReturned" onclick="switchReportTab('returned')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
                         ✅ รับคืนแล้ว (<span id="countReturnedBadge">0</span>)
                     </button>
+                    <button id="tabBtnTransfer" onclick="switchReportTab('transfer')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                        🚚 โอนย้ายข้ามงาน (<span id="countTransferBadge">0</span>)
+                    </button>
                     <button id="tabBtnAll" onclick="switchReportTab('all')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
                         📋 ทั้งหมด (<span id="countAllBadge">0</span>)
                     </button>
@@ -2982,6 +2985,7 @@
             const btnPending = document.getElementById('tabBtnPending');
             const btnPartial = document.getElementById('tabBtnPartial');
             const btnReturned = document.getElementById('tabBtnReturned');
+            const btnTransfer = document.getElementById('tabBtnTransfer');
             const btnAll = document.getElementById('tabBtnAll');
             const titleEl = document.getElementById('reportHeaderTitle');
             const subtitleEl = document.getElementById('reportHeaderSubtitle');
@@ -2991,6 +2995,7 @@
             if (btnPending) btnPending.className = inactiveClass;
             if (btnPartial) btnPartial.className = inactiveClass;
             if (btnReturned) btnReturned.className = inactiveClass;
+            if (btnTransfer) btnTransfer.className = inactiveClass;
             if (btnAll) btnAll.className = inactiveClass;
 
             if (tab === 'pending') {
@@ -3013,6 +3018,13 @@
                 if (subtitleEl) {
                     subtitleEl.className = 'text-sm text-emerald-400 mt-1 flex items-center gap-1.5';
                     subtitleEl.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span> แสดงรายการใบเบิกที่นำอุปกรณ์กลับเข้าคลังเรียบร้อยแล้ว';
+                }
+            } else if (tab === 'transfer') {
+                if (btnTransfer) btnTransfer.className = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg';
+                if (titleEl) titleEl.textContent = 'รายงานการโอนย้ายอุปกรณ์ข้ามไซต์งาน';
+                if (subtitleEl) {
+                    subtitleEl.className = 'text-sm text-indigo-400 mt-1 flex items-center gap-1.5';
+                    subtitleEl.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span> แสดงรายการใบเบิกที่มีการโอนย้ายอุปกรณ์ไปยังไซต์งานอื่น';
                 }
             } else {
                 if (btnAll) btnAll.className = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg';
@@ -3042,15 +3054,18 @@
             const countPending = cachedRequisitionsList.filter(item => !item.returnStatus || item.returnStatus === 'ยังไม่คืน').length;
             const countPartial = cachedRequisitionsList.filter(item => item.returnStatus === 'คืนบางส่วน').length;
             const countReturned = cachedRequisitionsList.filter(item => item.returnStatus === 'รับคืนแล้ว').length;
+            const countTransfer = cachedRequisitionsList.filter(item => item.transferItems && item.transferItems.length > 0).length;
             const countAll = cachedRequisitionsList.length;
 
             const badgeP = document.getElementById('countPendingBadge');
             const badgePart = document.getElementById('countPartialBadge');
             const badgeR = document.getElementById('countReturnedBadge');
+            const badgeT = document.getElementById('countTransferBadge');
             const badgeA = document.getElementById('countAllBadge');
             if (badgeP) badgeP.textContent = countPending;
             if (badgePart) badgePart.textContent = countPartial;
             if (badgeR) badgeR.textContent = countReturned;
+            if (badgeT) badgeT.textContent = countTransfer;
             if (badgeA) badgeA.textContent = countAll;
 
             // Filter items based on active tab
@@ -3061,6 +3076,8 @@
                 filtered = filtered.filter(item => item.returnStatus === 'คืนบางส่วน');
             } else if (currentReportTab === 'returned') {
                 filtered = filtered.filter(item => item.returnStatus === 'รับคืนแล้ว');
+            } else if (currentReportTab === 'transfer') {
+                filtered = filtered.filter(item => item.transferItems && item.transferItems.length > 0);
             }
 
             // Filter items based on date range
@@ -3127,6 +3144,17 @@
                         <button onclick="quickReturnRequisition('${docNo}')" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 rounded text-white mr-1 shadow transition inline-flex items-center gap-1">🔄 รับคืน</button>
                         <button onclick="printRequisition('${data.id}')" class="text-xs bg-blue-600 hover:bg-blue-500 px-2.5 py-1 rounded text-white mr-1 shadow transition">🖨️ ใบเบิก</button>
                     `;
+                }
+
+                // Extra badge for transfer items
+                if (data.transferItems && data.transferItems.length > 0) {
+                    const transferTotalQty = data.transferItems.reduce((sum, t) => sum + (parseInt(t.qty) || 0), 0);
+                    statusBadge += `<div class="mt-1"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 inline-flex items-center gap-1">🚚 โอนย้าย ${transferTotalQty} ชิ้น</span></div>`;
+                }
+                // Extra badge for damage/loss items
+                if (data.damageLossItems && data.damageLossItems.length > 0) {
+                    const dmgTotalQty = data.damageLossItems.reduce((sum, d) => sum + (parseInt(d.qty) || 0), 0);
+                    statusBadge += `<div class="mt-1"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 inline-flex items-center gap-1">⚠️ เสีย/หาย ${dmgTotalQty} ชิ้น</span></div>`;
                 }
 
                 // If damage or loss recorded
@@ -4371,11 +4399,11 @@
 
             // คำนวณยอดคงเหลือสุทธิ (Net Stock Balance) ตามหลักมาตรฐานสากล:
 
-            // ยอดคงเหลือสุทธิ = (รับเข้า + รับคืน) - (เบิกใช้งาน + โอนย้าย + เบิกซ่อม + สูญหาย + ตัดเป็นซาก)
+            // ยอดคงเหลือสุทธิในคลัง = (รับเข้า + รับคืน) - เบิกใช้งาน (ส่วนโอนย้าย/ซ่อม/สูญหาย เป็นการจัดการสถานะที่ไซต์งาน)
 
-            const netBalanceQty = (sumStockIn + sumReturned) - (sumIssued + sumTransferred + sumRepaired + sumLost + sumScrapped);
+            const netBalanceQty = (sumStockIn + sumReturned) - sumIssued;
 
-            const netBalanceVal = Math.max(0, (valStockIn + valReturned) - (valIssued + valTransferred + valRepaired + valLost + valScrapped));
+            const netBalanceVal = Math.max(0, (valStockIn + valReturned) - valIssued);
 
 
 
@@ -4950,7 +4978,7 @@
                             name: item.name,
                             category: item.category || 'ทั่วไป',
                             type: action,
-                            changeQty: action === 'รับคืน' ? processQty : 0,
+                            changeQty: processQty,
                             operator: operator,
                             site: action === 'โอนย้ายข้ามงาน' ? (note || 'โอนย้ายข้ามงาน') : (currentReturnReq.jobSite || '-'),
                             note: note || (action + ' จากใบเบิก ' + (currentReturnReq.docNo || ''))
