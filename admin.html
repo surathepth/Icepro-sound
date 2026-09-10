@@ -556,60 +556,14 @@
         <!-- 5. VIEW: REPORTS (รายงานและประวัติใบเบิกอุปกรณ์)             -->
         <!-- ======================================================== -->
         <div id="view-reports" class="view-section hidden space-y-6">
-            <!-- Header Section with Dynamic Title & Tabs -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-700 pb-4 gap-4 no-print">
+            <div class="flex justify-between items-end border-b border-gray-700 pb-4 no-print">
                 <div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-2xl">📋</span>
-                        <h1 id="reportHeaderTitle" class="text-2xl sm:text-3xl font-bold text-white tracking-tight">รายงานอุปกรณ์ยังไม่คืน (อยู่หน้างาน)</h1>
-                    </div>
-                    <p id="reportHeaderSubtitle" class="text-sm text-amber-400 mt-1 flex items-center gap-1.5">
-                        <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                        แสดงรายการใบเบิกที่ยังไม่มีการรับคืนอุปกรณ์เข้าคลัง
-                    </p>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white mb-1">📋 รายงานและประวัติใบเบิก (Requisition Reports)</h1>
+                    <p class="text-sm text-gray-400">ตรวจสอบประวัติการเบิกอุปกรณ์ สรุปยอด และสั่งพิมพ์เอกสาร A4</p>
                 </div>
-
-                <!-- Report Sub-tabs Selector -->
-                <div class="flex flex-wrap items-center bg-slate-900/80 p-1.5 rounded-xl border border-slate-700 shadow-inner gap-1">
-                    <button id="tabBtnPending" onclick="switchReportTab('pending')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg">
-                        ⏳ ยังไม่คืน (<span id="countPendingBadge">0</span>)
-                    </button>
-                    <button id="tabBtnPartial" onclick="switchReportTab('partial')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
-                        ⚠️ คืนบางส่วน (<span id="countPartialBadge">0</span>)
-                    </button>
-                    <button id="tabBtnReturned" onclick="switchReportTab('returned')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
-                        ✅ รับคืนแล้ว (<span id="countReturnedBadge">0</span>)
-                    </button>
-                    <button id="tabBtnAll" onclick="switchReportTab('all')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
-                        📋 ทั้งหมด (<span id="countAllBadge">0</span>)
-                    </button>
-                </div>
-            </div>
-
-            <!-- Date Range Filter & Control Bar -->
-            <div class="glass-panel p-4 rounded-xl border border-gray-700/80 shadow-md flex flex-wrap items-center justify-between gap-3 no-print bg-slate-800/40">
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs text-slate-300 font-medium">📅 จาก วัน/เดือน/ปี:</label>
-                        <input type="date" id="repDateFrom" onchange="filterReportData()" class="bg-slate-900 border border-slate-600 text-white text-xs sm:text-sm rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs text-slate-300 font-medium">📅 ถึง วัน/เดือน/ปี:</label>
-                        <input type="date" id="repDateTo" onchange="filterReportData()" class="bg-slate-900 border border-slate-600 text-white text-xs sm:text-sm rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </div>
-                    <button onclick="resetReportFilter()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 hover:text-white px-3 py-1.5 rounded-lg transition border border-slate-600 flex items-center gap-1">
-                        ❌ ล้างวันที่
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <div id="reportSummaryStats" class="text-xs font-mono text-slate-300 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-700">
-                        แสดง 0 รายการ
-                    </div>
-                    <button onclick="loadReportData()" class="bg-blue-600 hover:bg-blue-500 px-3.5 py-1.5 rounded-lg text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow">
-                        🔄 รีเฟรชข้อมูล
-                    </button>
-                </div>
+                <button onclick="loadReportData()" class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-white text-sm transition flex items-center gap-1">
+                    🔄 รีเฟรชข้อมูล
+                </button>
             </div>
 
             <!-- Table Reports -->
@@ -2920,202 +2874,6 @@
         // ========================================================
         // 7. REPORTS & REQUISITION CONTROLLER
         // ========================================================
-        let cachedRequisitionsList = [];
-        let currentReportTab = 'pending'; // 'pending' | 'returned' | 'all'
-
-        function switchReportTab(tab) {
-            currentReportTab = tab;
-            
-            const btnPending = document.getElementById('tabBtnPending');
-            const btnPartial = document.getElementById('tabBtnPartial');
-            const btnReturned = document.getElementById('tabBtnReturned');
-            const btnAll = document.getElementById('tabBtnAll');
-            const titleEl = document.getElementById('reportHeaderTitle');
-            const subtitleEl = document.getElementById('reportHeaderSubtitle');
-
-            const inactiveClass = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800';
-            
-            if (btnPending) btnPending.className = inactiveClass;
-            if (btnPartial) btnPartial.className = inactiveClass;
-            if (btnReturned) btnReturned.className = inactiveClass;
-            if (btnAll) btnAll.className = inactiveClass;
-
-            if (tab === 'pending') {
-                if (btnPending) btnPending.className = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg';
-                if (titleEl) titleEl.textContent = 'รายงานอุปกรณ์ยังไม่คืน (อยู่หน้างาน)';
-                if (subtitleEl) {
-                    subtitleEl.className = 'text-sm text-amber-400 mt-1 flex items-center gap-1.5';
-                    subtitleEl.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> แสดงรายการใบเบิกที่ยังไม่มีการรับคืนอุปกรณ์เข้าคลัง';
-                }
-            } else if (tab === 'partial') {
-                if (btnPartial) btnPartial.className = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg';
-                if (titleEl) titleEl.textContent = 'รายงานอุปกรณ์รับคืนบางส่วน (มียอดค้างคืน)';
-                if (subtitleEl) {
-                    subtitleEl.className = 'text-sm text-orange-400 mt-1 flex items-center gap-1.5';
-                    subtitleEl.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span> แสดงรายการใบเบิกที่รับคืนแล้วบางส่วน และยังมียอดอุปกรณ์ค้างส่งคืน';
-                }
-            } else if (tab === 'returned') {
-                if (btnReturned) btnReturned.className = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg';
-                if (titleEl) titleEl.textContent = 'รายงานอุปกรณ์รับคืนแล้ว (เข้าคลังแล้ว)';
-                if (subtitleEl) {
-                    subtitleEl.className = 'text-sm text-emerald-400 mt-1 flex items-center gap-1.5';
-                    subtitleEl.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span> แสดงรายการใบเบิกที่นำอุปกรณ์กลับเข้าคลังเรียบร้อยแล้ว';
-                }
-            } else {
-                if (btnAll) btnAll.className = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg';
-                if (titleEl) titleEl.textContent = 'รายงานและประวัติใบเบิกทั้งหมด';
-                if (subtitleEl) {
-                    subtitleEl.className = 'text-sm text-blue-400 mt-1 flex items-center gap-1.5';
-                    subtitleEl.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-blue-400"></span> แสดงประวัติใบเบิกอุปกรณ์ทั้งหมด ทั้งที่คืนแล้วและยังไม่คืน';
-                }
-            }
-
-            filterReportData();
-        }
-
-        function resetReportFilter() {
-            const f = document.getElementById('repDateFrom');
-            const t = document.getElementById('repDateTo');
-            if (f) f.value = '';
-            if (t) t.value = '';
-            filterReportData();
-        }
-
-        function filterReportData() {
-            const tbody = document.getElementById('reportTableBody');
-            if (!tbody) return;
-
-            // Update badge counters across all cached items
-            const countPending = cachedRequisitionsList.filter(item => !item.returnStatus || item.returnStatus === 'ยังไม่คืน').length;
-            const countPartial = cachedRequisitionsList.filter(item => item.returnStatus === 'คืนบางส่วน').length;
-            const countReturned = cachedRequisitionsList.filter(item => item.returnStatus === 'รับคืนแล้ว').length;
-            const countAll = cachedRequisitionsList.length;
-
-            const badgeP = document.getElementById('countPendingBadge');
-            const badgePart = document.getElementById('countPartialBadge');
-            const badgeR = document.getElementById('countReturnedBadge');
-            const badgeA = document.getElementById('countAllBadge');
-            if (badgeP) badgeP.textContent = countPending;
-            if (badgePart) badgePart.textContent = countPartial;
-            if (badgeR) badgeR.textContent = countReturned;
-            if (badgeA) badgeA.textContent = countAll;
-
-            // Filter items based on active tab
-            let filtered = cachedRequisitionsList;
-            if (currentReportTab === 'pending') {
-                filtered = filtered.filter(item => !item.returnStatus || item.returnStatus === 'ยังไม่คืน');
-            } else if (currentReportTab === 'partial') {
-                filtered = filtered.filter(item => item.returnStatus === 'คืนบางส่วน');
-            } else if (currentReportTab === 'returned') {
-                filtered = filtered.filter(item => item.returnStatus === 'รับคืนแล้ว');
-            }
-
-            // Filter items based on date range
-            const dateFromInput = document.getElementById('repDateFrom');
-            const dateToInput = document.getElementById('repDateTo');
-            const fromVal = dateFromInput ? dateFromInput.value : '';
-            const toVal = dateToInput ? dateToInput.value : '';
-
-            let fromDate = fromVal ? new Date(fromVal + 'T00:00:00') : null;
-            let toDate = toVal ? new Date(toVal + 'T23:59:59.999') : null;
-
-            if (fromDate || toDate) {
-                filtered = filtered.filter(item => {
-                    if (!item._dateObj) return false;
-                    if (fromDate && item._dateObj < fromDate) return false;
-                    if (toDate && item._dateObj > toDate) return false;
-                    return true;
-                });
-            }
-
-            // Summary stats
-            const statsEl = document.getElementById('reportSummaryStats');
-            const totalFilteredQty = filtered.reduce((sum, doc) => {
-                return sum + ((doc.items || []).reduce((s, it) => s + (parseInt(it.qty) || 0), 0));
-            }, 0);
-
-            if (statsEl) {
-                statsEl.textContent = `แสดง ${filtered.length} รายการ (รวม ${totalFilteredQty} ชิ้น)`;
-            }
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-12 text-slate-400">🔍 ไม่พบรายการใบเบิกตามเงื่อนไขที่เลือก (ช่วงวันที่หรือสถานะนี้)</td></tr>';
-                return;
-            }
-
-            let html = '';
-            filtered.forEach(data => {
-                let dateStr = '-';
-                if (data._dateObj) {
-                    dateStr = data._dateObj.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-                }
-                const totalQty = (data.items || []).reduce((sum, item) => sum + (parseInt(item.qty) || 0), 0);
-                const docNo = data.docNo || data.id.slice(0, 8);
-                const status = data.returnStatus || 'ยังไม่คืน';
-                
-                let statusBadge = '';
-                let actionBtns = '';
-
-                if (status === 'รับคืนแล้ว') {
-                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 inline-flex items-center gap-1">✅ คืนครบแล้ว</span>`;
-                    actionBtns = `
-                        <button onclick="printRequisition('${data.id}')" class="text-xs bg-blue-600 hover:bg-blue-500 px-2.5 py-1 rounded text-white mr-1 shadow transition inline-flex items-center gap-1" title="พิมพ์ใบรับคืนสินค้าอุปกรณ์">🖨️ ใบรับคืน</button>
-                    `;
-                } else if (status === 'คืนบางส่วน') {
-                    const remaining = data.totalRemaining !== undefined ? data.totalRemaining : (totalQty - (data.totalReturned || 0));
-                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/40 inline-flex items-center gap-1">⚠️ คืนบางส่วน (ค้าง ${remaining} ชิ้น)</span>`;
-                    actionBtns = `
-                        <button onclick="quickReturnRequisition('${docNo}')" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 rounded text-white mr-1 shadow transition inline-flex items-center gap-1 font-bold">🔄 คืนส่วนที่เหลือ</button>
-                        <button onclick="printPartialReturnA4ById('${data.id}')" class="text-xs bg-amber-600 hover:bg-amber-500 px-2.5 py-1 rounded text-white mr-1 shadow transition inline-flex items-center gap-1" title="พิมพ์ใบรับคืนบางส่วน">🖨️ ใบรับคืนบางส่วน</button>
-                    `;
-                } else {
-                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-flex items-center gap-1">⏳ ยังไม่คืน (อยู่หน้างาน)</span>`;
-                    actionBtns = `
-                        <button onclick="quickReturnRequisition('${docNo}')" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 rounded text-white mr-1 shadow transition inline-flex items-center gap-1">🔄 รับคืน</button>
-                        <button onclick="printRequisition('${data.id}')" class="text-xs bg-blue-600 hover:bg-blue-500 px-2.5 py-1 rounded text-white mr-1 shadow transition">🖨️ ใบเบิก</button>
-                    `;
-                }
-
-                // If damage or loss recorded
-                if (data.damageLossItems && data.damageLossItems.length > 0) {
-                    actionBtns += `
-                        <button onclick="printDamageLossA4ById('${data.id}')" class="text-xs bg-red-600/80 hover:bg-red-600 px-2 py-1 rounded text-white mr-1 shadow transition inline-flex items-center gap-1" title="พิมพ์ใบแจ้งของชำรุด/สูญหาย">⚠️ ใบของเสีย/หาย</button>
-                    `;
-                }
-
-                // If transfer recorded
-                if (data.transferItems && data.transferItems.length > 0) {
-                    actionBtns += `
-                        <button onclick="printTransferA4ById('${data.id}')" class="text-xs bg-indigo-600/80 hover:bg-indigo-600 px-2 py-1 rounded text-white mr-1 shadow transition inline-flex items-center gap-1" title="พิมพ์ใบโอนย้ายข้ามไซต์งาน">🚚 ใบโอนย้าย</button>
-                    `;
-                }
-
-                actionBtns += `
-                    <button onclick="deleteRequisition('${data.id}')" class="text-xs bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white px-2 py-1 rounded border border-red-500/30 transition">🗑️</button>
-                `;
-
-                html += `
-                    <tr class="hover:bg-slate-800/50 transition border-b border-gray-700/30">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="font-bold font-mono text-blue-400 text-xs">${docNo}</div>
-                            <div class="text-xs font-mono text-gray-400 mt-0.5">${dateStr}</div>
-                        </td>
-                        <td class="px-6 py-4 font-medium text-white">${data.techName || data.technician || data.techFullName || '-'}</td>
-                        <td class="px-6 py-4 text-emerald-400 font-semibold">${data.jobSite || data.siteName || data.site || '-'}</td>
-                        <td class="px-6 py-4 text-slate-300 text-sm">${data.jobSale || data.sales || '-'}</td>
-                        <td class="px-6 py-4 text-center font-bold text-amber-400">${totalQty}</td>
-                        <td class="px-6 py-4 text-center whitespace-nowrap">
-                            ${statusBadge}
-                        </td>
-                        <td class="px-6 py-4 text-center no-print whitespace-nowrap">
-                            ${actionBtns}
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
         async function loadReportData() {
             const tbody = document.getElementById('reportTableBody');
             if (!tbody) return;
@@ -3124,41 +2882,40 @@
             try {
                 const snapshot = await db.collection('requisitions').orderBy('createdAt', 'desc').get();
                 if (snapshot.empty) {
-                    cachedRequisitionsList = [];
-                    filterReportData();
                     tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-slate-500">ยังไม่มีประวัติการเบิกอุปกรณ์ในระบบ</td></tr>';
                     return;
                 }
 
-                cachedRequisitionsList = [];
+                let html = '';
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    let dateObj = null;
+                    let dateStr = '-';
                     if (data.createdAt && data.createdAt.toDate) {
-                        dateObj = data.createdAt.toDate();
-                    } else if (data.createdAt) {
-                        dateObj = new Date(data.createdAt);
+                        dateStr = data.createdAt.toDate().toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
                     }
-                    cachedRequisitionsList.push({
-                        id: doc.id,
-                        ...data,
-                        _dateObj: dateObj
-                    });
-                });
+                    const totalQty = (data.items || []).reduce((sum, item) => sum + (parseInt(item.qty) || 0), 0);
 
-                filterReportData();
+                    html += `
+                        <tr class="hover:bg-slate-800/50 transition border-b border-gray-700/30">
+                            <td class="px-6 py-4 text-xs font-mono text-gray-300">${dateStr}</td>
+                            <td class="px-6 py-4 font-medium text-white">${data.techName || data.technician || data.techFullName || '-'}</td>
+                            <td class="px-6 py-4 text-emerald-400 font-semibold">${data.jobSite || data.siteName || data.site || '-'}</td>
+                            <td class="px-6 py-4 text-slate-300 text-sm">${data.jobSale || data.sales || '-'}</td>
+                            <td class="px-6 py-4 text-center font-bold text-amber-400">${totalQty}</td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">เบิกใช้งาน</span>
+                            </td>
+                            <td class="px-6 py-4 text-center no-print whitespace-nowrap">
+                                <button onclick="printRequisition('${doc.id}')" class="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-white mr-1 shadow transition">🖨️ พิมพ์ A4</button>
+                                <button onclick="deleteRequisition('${doc.id}')" class="text-xs bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white px-2.5 py-1 rounded border border-red-500/30 transition">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
             } catch (err) {
                 console.error("Load report error:", err);
                 tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-red-400">❌ เกิดข้อผิดพลาด: ${err.message}</td></tr>`;
-            }
-        }
-
-        async function quickReturnRequisition(docNo) {
-            await openReturnModal();
-            const input = document.getElementById('returnDocNoInput');
-            if (input) {
-                input.value = docNo;
-                loadRequisitionForReturn();
             }
         }
 
@@ -3183,9 +2940,6 @@
             }
 
             const dateStr = new Date().toLocaleString('th-TH');
-            const isReturned = data && (data.returnStatus === 'รับคืนแล้ว');
-            const docTitle = isReturned ? 'ใบรับคืนสินค้าอุปกรณ์' : 'ใบเบิก / ใบยืมอุปกรณ์';
-            const docSubtitle = isReturned ? 'EQUIPMENT RETURN FORM' : 'EQUIPMENT REQUISITION FORM';
             
             // วนลูปสร้างแถวตารางรายการอุปกรณ์จริง
             let tableRows = '';
@@ -3414,8 +3168,8 @@
                                 <div class="company-subtitle">บริการระบบเสียง ระบบไฟเวที และอุปกรณ์จัดงานอีเวนต์ครบวงจร</div>
                             </div>
                             <div class="doc-block">
-                                <div class="doc-badge">${docTitle}</div>
-                                <div class="doc-badge-en">${docSubtitle}</div>
+                                <div class="doc-badge">ใบเบิก / ใบยืมอุปกรณ์</div>
+                                <div class="doc-badge-en">EQUIPMENT REQUISITION FORM</div>
                             </div>
                         </div>
                         
@@ -3492,20 +3246,20 @@
                         <div class="signatures">
                             <div class="sig-box">
                                 <div class="sig-line"></div>
-                                <p class="sig-name">( ${isReturned ? (data.returnOperator || data.issuerName || data.techName || '.............................................') : (data.techName || data.technician || '.............................................')} )</p>
-                                <p class="sig-title">${isReturned ? 'ผู้รับคืน' : 'ผู้สั่งงาน / ผู้เบิก / ผู้ยืม'}</p>
+                                <p class="sig-name">( ${data.techName || data.technician || '.............................................'} )</p>
+                                <p class="sig-title">ผู้สั่งงาน / ผู้เบิก / ผู้ยืม</p>
                                 <p class="sig-date">วันที่ ......./......./.......</p>
                             </div>
                             <div class="sig-box">
                                 <div class="sig-line"></div>
                                 <p class="sig-name">( ${data.approverName || '.............................................'} )</p>
-                                <p class="sig-title">${isReturned ? 'ผู้ตรวจสอบ' : 'ผู้อนุมัติ'}</p>
+                                <p class="sig-title">ผู้อนุมัติ</p>
                                 <p class="sig-date">วันที่ ......./......./.......</p>
                             </div>
                             <div class="sig-box">
                                 <div class="sig-line"></div>
-                                <p class="sig-name">( ${isReturned ? (data.techName || data.technician || '.............................................') : (data.issuerName || '.............................................')} )</p>
-                                <p class="sig-title">${isReturned ? 'ผู้ส่งคืน' : 'ผู้ให้เบิก / ผู้จ่ายสินค้า'}</p>
+                                <p class="sig-name">( ${data.issuerName || '.............................................'} )</p>
+                                <p class="sig-title">ผู้ให้เบิก / ผู้จ่ายสินค้า</p>
                                 <p class="sig-date">วันที่ ......./......./.......</p>
                             </div>
                         </div>
@@ -3532,512 +3286,6 @@
                 }
             }
         }
-
-        // ========================================================
-        // 7.1 PRINT A4: PARTIAL RETURN / DAMAGE & LOSS / TRANSFER FORMS
-        // ========================================================
-        async function printPartialReturnA4ById(docId) {
-            try {
-                const doc = await db.collection('requisitions').doc(docId).get();
-                if (!doc.exists) { alert('❌ ไม่พบข้อมูลใบเบิกนี้'); return; }
-                printPartialReturnA4(doc.data(), doc.data().items || []);
-            } catch (err) {
-                alert("❌ เกิดข้อผิดพลาด: " + err.message);
-            }
-        }
-
-        function printPartialReturnA4(data, items) {
-            const printWindow = window.open('', '_blank', 'width=950,height=1200');
-            if (!printWindow) {
-                alert('⚠️ เบราว์เซอร์บล็อก Pop-up กรุณาอนุญาต Pop-up ค่ะ');
-                return;
-            }
-
-            const dateStr = new Date().toLocaleString('th-TH');
-            let tableRows = '';
-            (items || []).forEach((item, index) => {
-                const origQty = parseInt(item.qty) || 0;
-                const retQty = parseInt(item.returnedQty) || 0;
-                const remQty = Math.max(0, origQty - retQty);
-                tableRows += `
-                    <tr>
-                        <td style="border: 1px solid #475569; padding: 7px 6px; text-align: center; font-weight: 600;">${index + 1}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 10px; text-align: left; line-height: 1.35;">${item.name || '-'}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 10px; text-align: right; font-weight: 600;">${origQty} ${item.unit || 'ชิ้น'}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 10px; text-align: right; font-weight: bold; color: #047857;">${retQty} ${item.unit || 'ชิ้น'}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 10px; text-align: right; font-weight: bold; color: ${remQty > 0 ? '#b45309' : '#047857'};">${remQty} ${item.unit || 'ชิ้น'}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; color: #475569;">${item.note || '-'}</td>
-                    </tr>
-                `;
-            });
-
-            const minRows = 10;
-            const currentLen = (items || []).length;
-            if (currentLen < minRows) {
-                for (let i = currentLen; i < minRows; i++) {
-                    tableRows += `
-                        <tr style="height: 28px;">
-                            <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center; color: #94a3b8; font-size: 12px;">${i + 1}</td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 8px;"></td>
-                        </tr>
-                    `;
-                }
-            }
-
-            const htmlContent = `
-                <!DOCTYPE html>
-                <html lang="th">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>ใบรับคืนสินค้าอุปกรณ์ (รับคืนบางส่วน) - ${data.docNo || ''}</title>
-                    <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap');
-                        @page { size: A4 portrait; margin: 0; }
-                        * { box-sizing: border-box; }
-                        body { 
-                            font-family: 'Sarabun', sans-serif; 
-                            padding: 12mm 15mm; 
-                            margin: 0;
-                            color: #0f172a; 
-                            background-color: #fff;
-                            -webkit-print-color-adjust: exact;
-                            print-color-adjust: exact;
-                        }
-                        .container { width: 100%; max-width: 100%; margin: 0 auto; }
-                        .header-wrapper { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 14px; }
-                        .company-name { font-size: 24px; font-weight: 800; margin: 0; letter-spacing: 0.5px; color: #0f172a; line-height: 1.2; }
-                        .company-subtitle { font-size: 12px; color: #64748b; margin-top: 3px; font-weight: 500; }
-                        .doc-block { text-align: right; }
-                        .doc-badge { font-size: 17px; font-weight: 700; background-color: #fff7ed; display: inline-block; padding: 5px 14px; border-radius: 6px; border: 1.5px solid #fdba74; color: #c2410c; margin-bottom: 4px; }
-                        .doc-badge-en { font-size: 11px; font-weight: 600; color: #9a3412; letter-spacing: 1px; }
-                        .info-box { border: 1px solid #cbd5e1; border-radius: 6px; background-color: #f8fafc; padding: 10px 14px; margin-bottom: 16px; }
-                        .info-grid { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; line-height: 1.55; }
-                        .info-col-left { width: 48%; text-align: left; }
-                        .info-col-right { width: 52%; text-align: left; }
-                        .info-row { display: flex; align-items: flex-start; margin-bottom: 3px; }
-                        .info-label { font-weight: 700; white-space: nowrap; flex-shrink: 0; color: #1e293b; }
-                        .info-val { flex-grow: 1; word-break: break-word; padding-left: 6px; color: #0f172a; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; table-layout: fixed; }
-                        th { background-color: #f1f5f9; border: 1px solid #475569; padding: 8px 6px; font-weight: 700; text-align: center; color: #0f172a; }
-                        .terms-box { border: 1px dashed #f97316; border-radius: 6px; background-color: #fffaf0; padding: 8px 12px; margin-bottom: 20px; font-size: 11.5px; }
-                        .terms-title { font-weight: 700; color: #c2410c; margin-bottom: 4px; }
-                        .signatures { display: flex; justify-content: space-between; margin-top: 18px; text-align: center; page-break-inside: avoid; }
-                        .sig-box { width: 30%; }
-                        .sig-line { border-bottom: 1px dashed #475569; margin-bottom: 6px; height: 38px; }
-                        .sig-name { margin: 3px 0; white-space: nowrap; font-weight: 500; font-size: 12.5px; }
-                        .sig-title { margin: 3px 0; font-weight: 700; white-space: nowrap; color: #1e293b; font-size: 12.5px; }
-                        .sig-date { margin-top: 4px; font-size: 11.5px; color: #64748b; }
-                        @media print { body { margin: 0; padding: 12mm 15mm; } .no-print { display: none !important; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header-wrapper">
-                            <div class="company-block">
-                                <h1 class="company-name">ICE PRO SOUND & LIGHTING</h1>
-                                <div class="company-subtitle">บริการระบบเสียง ระบบไฟเวที และอุปกรณ์จัดงานอีเวนต์ครบวงจร</div>
-                            </div>
-                            <div class="doc-block">
-                                <div class="doc-badge">ใบรับคืนสินค้าอุปกรณ์ (รับคืนบางส่วน)</div>
-                                <div class="doc-badge-en">PARTIAL EQUIPMENT RETURN FORM</div>
-                            </div>
-                        </div>
-                        
-                        <div class="info-box">
-                            <div class="info-grid">
-                                <div class="info-col-left">
-                                    <div class="info-row"><span class="info-label" style="width: 125px;">เลขที่เอกสาร :</span><span class="info-val" style="color: #ea580c; font-weight: bold; font-family: monospace;">${data.docNo || '-'}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 125px;">ผู้รับงาน / ผู้เบิก :</span><span class="info-val">${data.techName || data.technician || data.techFullName || '-'}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 125px;">ผู้ขนส่งสินค้า :</span><span class="info-val">${data.transporterName || data.techName || '-'}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 125px;">ผู้รับคืนเข้าคลัง :</span><span class="info-val" style="font-weight: bold; color: #047857;">${data.returnOperator || '-'}</span></div>
-                                </div>
-                                <div class="info-col-right">
-                                    <div class="info-row"><span class="info-label" style="width: 115px;">วันที่เบิกอุปกรณ์ :</span><span class="info-val">${(() => { if (data.date) return data.date; if (data.createdAt && data.createdAt.toDate) return data.createdAt.toDate().toLocaleDateString('th-TH'); return '-'; })()}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 115px;">วันที่รับคืนล่าสุด :</span><span class="info-val" style="font-weight: bold; color: #ea580c;">${dateStr}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 115px;">ไซต์งาน :</span><span class="info-val" style="font-weight: 600; color: #111827;">${data.jobSite || data.siteName || data.site || '-'}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 115px;">สถานที่จัดส่ง :</span><span class="info-val">${data.jobAddress || data.deliveryAddress || data.address || '-'}</span></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="width: 6%;">ลำดับ</th>
-                                    <th style="width: 42%; text-align: center;">รายการอุปกรณ์</th>
-                                    <th style="width: 13%; text-align: center;">เบิกไป</th>
-                                    <th style="width: 13%; text-align: center; color: #047857;">รับคืนแล้ว</th>
-                                    <th style="width: 13%; text-align: center; color: #c2410c;">คงค้างส่งคืน</th>
-                                    <th style="width: 13%; text-align: center;">หมายเหตุ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRows}
-                            </tbody>
-                        </table>
-
-                        <div class="terms-box">
-                            <div class="terms-title">📋 ข้อกำหนดและเงื่อนไขการรับคืนอุปกรณ์บางส่วน:</div>
-                            <div>1. ผู้ส่งคืนยอมรับว่าอุปกรณ์ตามรายการที่ยังคงค้าง อยู่ในความรับผิดชอบของช่าง/ทีมงาน และจะนำส่งคืนคลังสินค้าให้ครบถ้วนตามกำหนดเวลา</div>
-                            <div>2. ผู้รับคืนได้ตรวจนับจำนวนอุปกรณ์ที่รับคืนรอบนี้ถูกต้องเรียบร้อยแล้ว หากเกิดความสูญหายในภายหลัง ผู้เบิกยินยอมรับผิดชอบตามระเบียบบริษัท</div>
-                        </div>
-
-                        <div class="signatures">
-                            <div class="sig-box">
-                                <div class="sig-line"></div>
-                                <p class="sig-name">( ${data.returnOperator || data.issuerName || '.............................................'} )</p>
-                                <p class="sig-title">ผู้รับคืน</p>
-                                <p class="sig-date">วันที่ ......./......./.......</p>
-                            </div>
-                            <div class="sig-box">
-                                <div class="sig-line"></div>
-                                <p class="sig-name">( ${data.approverName || '.............................................'} )</p>
-                                <p class="sig-title">ผู้ตรวจสอบ</p>
-                                <p class="sig-date">วันที่ ......./......./.......</p>
-                            </div>
-                            <div class="sig-box">
-                                <div class="sig-line"></div>
-                                <p class="sig-name">( ${data.techName || data.technician || '.............................................'} )</p>
-                                <p class="sig-title">ผู้ส่งคืน (ยอมรับยอดคงค้าง)</p>
-                                <p class="sig-date">วันที่ ......./......./.......</p>
-                            </div>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `;
-            printWindow.document.write(htmlContent);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => { printWindow.print(); }, 600);
-        }
-
-        async function printDamageLossA4ById(docId) {
-            try {
-                const doc = await db.collection('requisitions').doc(docId).get();
-                if (!doc.exists) { alert('❌ ไม่พบข้อมูลใบเบิกนี้'); return; }
-                printDamageLossA4(doc.data(), doc.data().damageLossItems || []);
-            } catch (err) {
-                alert("❌ เกิดข้อผิดพลาด: " + err.message);
-            }
-        }
-
-        function printDamageLossA4(data, damageItems) {
-            const printWindow = window.open('', '_blank', 'width=950,height=1200');
-            if (!printWindow) { alert('⚠️ เบราว์เซอร์บล็อก Pop-up กรุณาอนุญาต Pop-up ค่ะ'); return; }
-
-            const dateStr = new Date().toLocaleString('th-TH');
-            let tableRows = '';
-            (damageItems || []).forEach((item, index) => {
-                tableRows += `
-                    <tr>
-                        <td style="border: 1px solid #475569; padding: 7px 6px; text-align: center; font-weight: 600;">${index + 1}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 10px; text-align: left; line-height: 1.35;">${item.itemName || '-'}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 10px; text-align: center; font-weight: bold; color: #b91c1c;">${item.qty || 0} ${item.unit || 'ชิ้น'}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 10px; text-align: center; font-weight: bold; color: #b91c1c;">${item.actionType || 'สูญหาย'}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 8px; text-align: left; color: #475569;">${item.note || '-'}</td>
-                    </tr>
-                `;
-            });
-
-            const minRows = 8;
-            const currentLen = (damageItems || []).length;
-            if (currentLen < minRows) {
-                for (let i = currentLen; i < minRows; i++) {
-                    tableRows += `
-                        <tr style="height: 30px;">
-                            <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center; color: #94a3b8; font-size: 12px;">${i + 1}</td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 8px;"></td>
-                        </tr>
-                    `;
-                }
-            }
-
-            const htmlContent = `
-                <!DOCTYPE html>
-                <html lang="th">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>ใบแจ้งอุปกรณ์ชำรุด/สูญหาย - ${data.docNo || ''}</title>
-                    <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap');
-                        @page { size: A4 portrait; margin: 0; }
-                        * { box-sizing: border-box; }
-                        body { font-family: 'Sarabun', sans-serif; padding: 12mm 15mm; margin: 0; color: #0f172a; background-color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                        .container { width: 100%; max-width: 100%; margin: 0 auto; }
-                        .header-wrapper { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #b91c1c; padding-bottom: 12px; margin-bottom: 14px; }
-                        .company-name { font-size: 24px; font-weight: 800; margin: 0; letter-spacing: 0.5px; color: #0f172a; line-height: 1.2; }
-                        .company-subtitle { font-size: 12px; color: #64748b; margin-top: 3px; font-weight: 500; }
-                        .doc-block { text-align: right; }
-                        .doc-badge { font-size: 17px; font-weight: 700; background-color: #fef2f2; display: inline-block; padding: 5px 14px; border-radius: 6px; border: 1.5px solid #f87171; color: #b91c1c; margin-bottom: 4px; }
-                        .doc-badge-en { font-size: 11px; font-weight: 600; color: #991b1b; letter-spacing: 1px; }
-                        .info-box { border: 1px solid #cbd5e1; border-radius: 6px; background-color: #f8fafc; padding: 10px 14px; margin-bottom: 16px; }
-                        .info-grid { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; line-height: 1.55; }
-                        .info-col-left { width: 48%; text-align: left; }
-                        .info-col-right { width: 52%; text-align: left; }
-                        .info-row { display: flex; align-items: flex-start; margin-bottom: 3px; }
-                        .info-label { font-weight: 700; white-space: nowrap; flex-shrink: 0; color: #1e293b; }
-                        .info-val { flex-grow: 1; word-break: break-word; padding-left: 6px; color: #0f172a; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; table-layout: fixed; }
-                        th { background-color: #fee2e2; border: 1px solid #475569; padding: 8px 6px; font-weight: 700; text-align: center; color: #991b1b; }
-                        .terms-box { border: 1px dashed #ef4444; border-radius: 6px; background-color: #fff5f5; padding: 8px 12px; margin-bottom: 20px; font-size: 11.5px; }
-                        .terms-title { font-weight: 700; color: #b91c1c; margin-bottom: 4px; }
-                        .signatures { display: flex; justify-content: space-between; margin-top: 20px; text-align: center; page-break-inside: avoid; }
-                        .sig-box { width: 30%; }
-                        .sig-line { border-bottom: 1px dashed #475569; margin-bottom: 6px; height: 38px; }
-                        .sig-name { margin: 3px 0; white-space: nowrap; font-weight: 500; font-size: 12.5px; }
-                        .sig-title { margin: 3px 0; font-weight: 700; white-space: nowrap; color: #1e293b; font-size: 12.5px; }
-                        .sig-date { margin-top: 4px; font-size: 11.5px; color: #64748b; }
-                        @media print { body { margin: 0; padding: 12mm 15mm; } .no-print { display: none !important; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header-wrapper">
-                            <div class="company-block">
-                                <h1 class="company-name">ICE PRO SOUND & LIGHTING</h1>
-                                <div class="company-subtitle">บริการระบบเสียง ระบบไฟเวที และอุปกรณ์จัดงานอีเวนต์ครบวงจร</div>
-                            </div>
-                            <div class="doc-block">
-                                <div class="doc-badge">ใบแจ้งอุปกรณ์ชำรุด / สูญหาย</div>
-                                <div class="doc-badge-en">EQUIPMENT DAMAGE & LOSS REPORT</div>
-                            </div>
-                        </div>
-                        
-                        <div class="info-box">
-                            <div class="info-grid">
-                                <div class="info-col-left">
-                                    <div class="info-row"><span class="info-label" style="width: 135px;">เลขที่ใบเบิกอ้างอิง :</span><span class="info-val" style="color: #b91c1c; font-weight: bold; font-family: monospace;">${data.docNo || '-'}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 135px;">ผู้รับผิดชอบ / ช่าง :</span><span class="info-val" style="font-weight: 600;">${data.techName || data.technician || '-'}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 135px;">ผู้ตรวจรับ / บันทึก :</span><span class="info-val">${data.returnOperator || '-'}</span></div>
-                                </div>
-                                <div class="info-col-right">
-                                    <div class="info-row"><span class="info-label" style="width: 120px;">วันที่ทำรายการ :</span><span class="info-val">${dateStr}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 120px;">ไซต์งานที่เกิดเหตุ :</span><span class="info-val" style="font-weight: 600; color: #111827;">${data.jobSite || data.siteName || data.site || '-'}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 120px;">สถานที่ไซต์งาน :</span><span class="info-val">${data.jobAddress || data.deliveryAddress || '-'}</span></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="width: 6%;">ลำดับ</th>
-                                    <th style="width: 44%; text-align: center;">รายการอุปกรณ์</th>
-                                    <th style="width: 15%; text-align: center;">จำนวน</th>
-                                    <th style="width: 15%; text-align: center;">สถานะความเสียหาย</th>
-                                    <th style="width: 20%; text-align: center;">สาเหตุ / รายละเอียด</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRows}
-                            </tbody>
-                        </table>
-
-                        <div class="terms-box">
-                            <div class="terms-title">⚠️ เงื่อนไขการจัดการอุปกรณ์ชำรุดหรือสูญหาย:</div>
-                            <div>1. เอกสารนี้ใช้เป็นหลักฐานเพื่อนำอุปกรณ์เข้าฝ่ายช่างเพื่อซ่อมบำรุง หรือดำเนินการตามระเบียบบริษัทเรื่องการชดใช้ความเสียหาย</div>
-                            <div>2. ผู้รับผิดชอบและฝ่ายตรวจสอบได้ยืนยันสภาพความเสียหายหรือการสูญหายร่วมกันตามรายการข้างต้น</div>
-                        </div>
-
-                        <div class="signatures">
-                            <div class="sig-box">
-                                <div class="sig-line"></div>
-                                <p class="sig-name">( ${data.returnOperator || data.issuerName || '.............................................'} )</p>
-                                <p class="sig-title">ผู้ตรวจรับ / สโตร์</p>
-                                <p class="sig-date">วันที่ ......./......./.......</p>
-                            </div>
-                            <div class="sig-box">
-                                <div class="sig-line"></div>
-                                <p class="sig-name">( ${data.approverName || '.............................................'} )</p>
-                                <p class="sig-title">ผู้ตรวจสอบ / ผู้จัดการ</p>
-                                <p class="sig-date">วันที่ ......./......./.......</p>
-                            </div>
-                            <div class="sig-box">
-                                <div class="sig-line"></div>
-                                <p class="sig-name">( ${data.techName || data.technician || '.............................................'} )</p>
-                                <p class="sig-title">ช่างผู้รับผิดชอบหน้างาน</p>
-                                <p class="sig-date">วันที่ ......./......./.......</p>
-                            </div>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `;
-            printWindow.document.write(htmlContent);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => { printWindow.print(); }, 600);
-        }
-
-        async function printTransferA4ById(docId) {
-            try {
-                const doc = await db.collection('requisitions').doc(docId).get();
-                if (!doc.exists) { alert('❌ ไม่พบข้อมูลใบเบิกนี้'); return; }
-                printTransferA4(doc.data(), doc.data().transferItems || []);
-            } catch (err) {
-                alert("❌ เกิดข้อผิดพลาด: " + err.message);
-            }
-        }
-
-        function printTransferA4(data, transferItems) {
-            const printWindow = window.open('', '_blank', 'width=950,height=1200');
-            if (!printWindow) { alert('⚠️ เบราว์เซอร์บล็อก Pop-up กรุณาอนุญาต Pop-up ค่ะ'); return; }
-
-            const dateStr = new Date().toLocaleString('th-TH');
-            let tableRows = '';
-            (transferItems || []).forEach((item, index) => {
-                tableRows += `
-                    <tr>
-                        <td style="border: 1px solid #475569; padding: 7px 6px; text-align: center; font-weight: 600;">${index + 1}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 10px; text-align: left; line-height: 1.35;">${item.itemName || '-'}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 10px; text-align: center; font-weight: bold; color: #4338ca;">${item.qty || 0} ${item.unit || 'ชิ้น'}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 10px; text-align: left; font-weight: 600; color: #1e293b;">${item.toSite || '-'}</td>
-                        <td style="border: 1px solid #475569; padding: 7px 8px; text-align: left; color: #475569;">${item.note || '-'}</td>
-                    </tr>
-                `;
-            });
-
-            const minRows = 8;
-            const currentLen = (transferItems || []).length;
-            if (currentLen < minRows) {
-                for (let i = currentLen; i < minRows; i++) {
-                    tableRows += `
-                        <tr style="height: 30px;">
-                            <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center; color: #94a3b8; font-size: 12px;">${i + 1}</td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 8px;"></td>
-                        </tr>
-                    `;
-                }
-            }
-
-            const htmlContent = `
-                <!DOCTYPE html>
-                <html lang="th">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>ใบโอนย้ายอุปกรณ์ข้ามไซต์งาน - ${data.docNo || ''}</title>
-                    <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap');
-                        @page { size: A4 portrait; margin: 0; }
-                        * { box-sizing: border-box; }
-                        body { font-family: 'Sarabun', sans-serif; padding: 12mm 15mm; margin: 0; color: #0f172a; background-color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                        .container { width: 100%; max-width: 100%; margin: 0 auto; }
-                        .header-wrapper { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #4338ca; padding-bottom: 12px; margin-bottom: 14px; }
-                        .company-name { font-size: 24px; font-weight: 800; margin: 0; letter-spacing: 0.5px; color: #0f172a; line-height: 1.2; }
-                        .company-subtitle { font-size: 12px; color: #64748b; margin-top: 3px; font-weight: 500; }
-                        .doc-block { text-align: right; }
-                        .doc-badge { font-size: 17px; font-weight: 700; background-color: #eef2ff; display: inline-block; padding: 5px 14px; border-radius: 6px; border: 1.5px solid #a5b4fc; color: #4338ca; margin-bottom: 4px; }
-                        .doc-badge-en { font-size: 11px; font-weight: 600; color: #3730a3; letter-spacing: 1px; }
-                        .info-box { border: 1px solid #cbd5e1; border-radius: 6px; background-color: #f8fafc; padding: 10px 14px; margin-bottom: 16px; }
-                        .info-grid { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; line-height: 1.55; }
-                        .info-col-left { width: 48%; text-align: left; }
-                        .info-col-right { width: 52%; text-align: left; }
-                        .info-row { display: flex; align-items: flex-start; margin-bottom: 3px; }
-                        .info-label { font-weight: 700; white-space: nowrap; flex-shrink: 0; color: #1e293b; }
-                        .info-val { flex-grow: 1; word-break: break-word; padding-left: 6px; color: #0f172a; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; table-layout: fixed; }
-                        th { background-color: #e0e7ff; border: 1px solid #475569; padding: 8px 6px; font-weight: 700; text-align: center; color: #3730a3; }
-                        .terms-box { border: 1px dashed #6366f1; border-radius: 6px; background-color: #f5f7ff; padding: 8px 12px; margin-bottom: 20px; font-size: 11.5px; }
-                        .terms-title { font-weight: 700; color: #4338ca; margin-bottom: 4px; }
-                        .signatures { display: flex; justify-content: space-between; margin-top: 20px; text-align: center; page-break-inside: avoid; }
-                        .sig-box { width: 30%; }
-                        .sig-line { border-bottom: 1px dashed #475569; margin-bottom: 6px; height: 38px; }
-                        .sig-name { margin: 3px 0; white-space: nowrap; font-weight: 500; font-size: 12.5px; }
-                        .sig-title { margin: 3px 0; font-weight: 700; white-space: nowrap; color: #1e293b; font-size: 12.5px; }
-                        .sig-date { margin-top: 4px; font-size: 11.5px; color: #64748b; }
-                        @media print { body { margin: 0; padding: 12mm 15mm; } .no-print { display: none !important; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header-wrapper">
-                            <div class="company-block">
-                                <h1 class="company-name">ICE PRO SOUND & LIGHTING</h1>
-                                <div class="company-subtitle">บริการระบบเสียง ระบบไฟเวที และอุปกรณ์จัดงานอีเวนต์ครบวงจร</div>
-                            </div>
-                            <div class="doc-block">
-                                <div class="doc-badge">ใบโอนย้ายอุปกรณ์ข้ามไซต์งาน</div>
-                                <div class="doc-badge-en">INTER-SITE EQUIPMENT TRANSFER FORM</div>
-                            </div>
-                        </div>
-                        
-                        <div class="info-box">
-                            <div class="info-grid">
-                                <div class="info-col-left">
-                                    <div class="info-row"><span class="info-label" style="width: 135px;">เลขที่ใบเบิกอ้างอิง :</span><span class="info-val" style="color: #4338ca; font-weight: bold; font-family: monospace;">${data.docNo || '-'}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 135px;">ไซต์งานต้นทาง :</span><span class="info-val" style="font-weight: 600;">${data.jobSite || data.siteName || data.site || '-'}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 135px;">ผู้รับผิดชอบ / ช่าง :</span><span class="info-val">${data.techName || data.technician || '-'}</span></div>
-                                </div>
-                                <div class="info-col-right">
-                                    <div class="info-row"><span class="info-label" style="width: 120px;">วันที่ทำรายการ :</span><span class="info-val">${dateStr}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 120px;">ผู้บันทึกโอนย้าย :</span><span class="info-val" style="font-weight: 600; color: #111827;">${data.returnOperator || '-'}</span></div>
-                                    <div class="info-row"><span class="info-label" style="width: 120px;">สถานที่จัดส่งเดิม :</span><span class="info-val">${data.jobAddress || data.deliveryAddress || '-'}</span></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="width: 6%;">ลำดับ</th>
-                                    <th style="width: 40%; text-align: center;">รายการอุปกรณ์</th>
-                                    <th style="width: 16%; text-align: center;">จำนวนโอนย้าย</th>
-                                    <th style="width: 22%; text-align: center;">โอนย้ายไปยังไซต์งาน</th>
-                                    <th style="width: 16%; text-align: center;">หมายเหตุ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRows}
-                            </tbody>
-                        </table>
-
-                        <div class="terms-box">
-                            <div class="terms-title">🚚 เงื่อนไขการโอนย้ายอุปกรณ์ข้ามไซต์งาน:</div>
-                            <div>1. อุปกรณ์ตามรายการข้างต้นได้รับการส่งมอบเพื่อย้ายไปใช้งาน ณ ไซต์งานปลายทาง โดยตรงโดยไม่นำกลับเข้าคลังใหญ่</div>
-                            <div>2. ผู้ขนส่งและผู้รับมอบปลายทางต้องตรวจเช็คสภาพและจำนวนอุปกรณ์ให้ตรงตามเอกสารนี้เมื่อถึงปลายทาง</div>
-                        </div>
-
-                        <div class="signatures">
-                            <div class="sig-box">
-                                <div class="sig-line"></div>
-                                <p class="sig-name">( ${data.techName || data.technician || '.............................................'} )</p>
-                                <p class="sig-title">ผู้ส่งมอบ (ไซต์ต้นทาง)</p>
-                                <p class="sig-date">วันที่ ......./......./.......</p>
-                            </div>
-                            <div class="sig-box">
-                                <div class="sig-line"></div>
-                                <p class="sig-name">( ${data.returnOperator || '.............................................'} )</p>
-                                <p class="sig-title">พนักงานขนส่ง / ผู้โอนย้าย</p>
-                                <p class="sig-date">วันที่ ......./......./.......</p>
-                            </div>
-                            <div class="sig-box">
-                                <div class="sig-line"></div>
-                                <p class="sig-name">( ............................................. )</p>
-                                <p class="sig-title">ผู้รับมอบ (ไซต์ปลายทาง)</p>
-                                <p class="sig-date">วันที่ ......./......./.......</p>
-                            </div>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `;
-            printWindow.document.write(htmlContent);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => { printWindow.print(); }, 600);
-        }
-
 
         
         // ========================================================
@@ -4779,27 +4027,18 @@
             } else {
                 let html = '';
                 items.forEach((item, idx) => {
-                    const originalQty = parseInt(item.qty) || 0;
-                    const returnedQty = parseInt(item.returnedQty) || 0;
-                    const remainingQty = Math.max(0, originalQty - returnedQty);
-                    const isFullyReturned = remainingQty === 0;
-
                     html += `
-                        <tr class="border-b border-gray-700/40 hover:bg-slate-800/40 ${isFullyReturned ? 'opacity-50 bg-slate-900/40' : ''}">
+                        <tr class="border-b border-gray-700/40 hover:bg-slate-800/40">
                             <td class="px-3 py-2.5">
                                 <div class="font-medium text-white">${item.name}</div>
                                 <div class="text-[11px] text-blue-400 font-mono">${item.sku || '-'}</div>
                             </td>
-                            <td class="px-3 py-2.5 text-center font-bold text-slate-300">
-                                <div>${originalQty} ${item.unit || 'ชิ้น'}</div>
-                                ${returnedQty > 0 ? `<div class="text-[10px] text-emerald-400 font-normal">คืนแล้ว: ${returnedQty}</div>` : ''}
-                                ${returnedQty > 0 && remainingQty > 0 ? `<div class="text-[10px] text-orange-400 font-bold">ค้าง: ${remainingQty}</div>` : ''}
-                            </td>
+                            <td class="px-3 py-2.5 text-center font-bold text-white">${item.qty} ${item.unit || 'ชิ้น'}</td>
                             <td class="px-3 py-2.5 text-center">
-                                <input type="number" id="retQty_${idx}" value="${remainingQty}" min="0" max="${remainingQty}" ${isFullyReturned ? 'disabled' : ''} class="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-center font-bold outline-none focus:border-emerald-400 ${isFullyReturned ? 'bg-slate-800 text-gray-500' : ''}">
+                                <input type="number" id="retQty_${idx}" value="${item.qty}" min="0" max="${item.qty}" class="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-center font-bold outline-none focus:border-emerald-400">
                             </td>
                             <td class="px-3 py-2.5">
-                                <select id="retAction_${idx}" ${isFullyReturned ? 'disabled' : ''} class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs outline-none focus:border-emerald-400">
+                                <select id="retAction_${idx}" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs outline-none focus:border-emerald-400">
                                     <option value="รับคืน">📥 คืนเข้าคลังปกติ</option>
                                     <option value="โอนย้ายข้ามงาน">🚚 โอนย้ายข้ามไซด์งาน</option>
                                     <option value="เบิกซ่อม">🔧 เบิกซ่อมบำรุง</option>
@@ -4808,7 +4047,7 @@
                                 </select>
                             </td>
                             <td class="px-3 py-2.5">
-                                <input type="text" id="retNote_${idx}" ${isFullyReturned ? 'disabled' : ''} placeholder="ระบุไซต์ปลายทาง หรือหมายเหตุ..." class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs outline-none focus:border-emerald-400">
+                                <input type="text" id="retNote_${idx}" placeholder="ระบุไซต์ปลายทาง หรือหมายเหตุ..." class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs outline-none focus:border-emerald-400">
                             </td>
                         </tr>
                     `;
@@ -4840,8 +4079,6 @@
 
             try {
                 let processedCount = 0;
-                let damageLossList = currentReturnReq.damageLossItems || [];
-                let transferList = currentReturnReq.transferItems || [];
 
                 for (let idx = 0; idx < items.length; idx++) {
                     const item = items[idx];
@@ -4855,7 +4092,6 @@
 
                     if (processQty > 0) {
                         processedCount++;
-                        item.returnedQty = (item.returnedQty || 0) + processQty;
 
                         // 1. If 'รับคืน', increment stock in inventory
                         if (action === 'รับคืน') {
@@ -4864,28 +4100,6 @@
                                 db.collection('inventory').doc(doc.id).update({
                                     stock: firebase.firestore.FieldValue.increment(processQty)
                                 });
-                            });
-                        } else if (action === 'สูญหาย' || action === 'เบิกซ่อม' || action === 'ตัดเป็นซาก-สิ้นสภาพการใช้งาน') {
-                            damageLossList.push({
-                                itemName: item.name,
-                                sku: item.sku || '-',
-                                qty: processQty,
-                                unit: item.unit || 'ชิ้น',
-                                actionType: action,
-                                note: note,
-                                recordedAt: new Date().toLocaleString('th-TH'),
-                                operator: operator
-                            });
-                        } else if (action === 'โอนย้ายข้ามงาน') {
-                            transferList.push({
-                                itemName: item.name,
-                                sku: item.sku || '-',
-                                qty: processQty,
-                                unit: item.unit || 'ชิ้น',
-                                toSite: note || 'ไม่ระบุไซต์ปลายทาง',
-                                fromSite: currentReturnReq.jobSite || '-',
-                                recordedAt: new Date().toLocaleString('th-TH'),
-                                operator: operator
                             });
                         }
 
@@ -4905,27 +4119,12 @@
                     }
                 }
 
-                // 3. Compute overall status
-                const totalBorrowed = items.reduce((sum, it) => sum + (parseInt(it.qty) || 0), 0);
-                const totalReturned = items.reduce((sum, it) => sum + (parseInt(it.returnedQty) || 0), 0);
-                const totalRemaining = Math.max(0, totalBorrowed - totalReturned);
-
-                let newStatus = 'รับคืนแล้ว';
-                if (totalRemaining > 0) {
-                    newStatus = (totalReturned > 0) ? 'คืนบางส่วน' : 'ยังไม่คืน';
-                }
-
+                // 3. Update Requisition Status
                 if (currentReturnReq._id) {
                     await db.collection('requisitions').doc(currentReturnReq._id).update({
-                        items: items,
-                        returnStatus: newStatus,
-                        totalBorrowed: totalBorrowed,
-                        totalReturned: totalReturned,
-                        totalRemaining: totalRemaining,
+                        returnStatus: 'รับคืนแล้ว',
                         returnOperator: operator,
-                        damageLossItems: damageLossList,
-                        transferItems: transferList,
-                        lastReturnedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        returnedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 }
 
@@ -4933,7 +4132,6 @@
                 closeReturnModal();
                 loadStockCardData();
                 loadInventoryData();
-                if (typeof loadReportData === 'function') loadReportData();
             } catch (err) {
                 console.error("Submit return error:", err);
                 alert("❌ เกิดข้อผิดพลาด: " + err.message);
