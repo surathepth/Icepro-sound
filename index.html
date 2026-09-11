@@ -133,6 +133,7 @@
         <div class="flex items-center gap-2 text-2xl font-bold tracking-wider">
             <img src="assets/ice-logo-new.jpg" alt="ICE Logo" class="h-14 w-14 md:h-16 md:w-16 object-contain rounded-full shadow-lg border-2 border-slate-700 bg-black" onerror="this.outerHTML='<div class=\'h-14 w-14 md:h-16 md:w-16 rounded-full shadow-lg border-2 border-slate-700 bg-black flex items-center justify-center\'><span class=\'text-white font-bold text-xl\' style=\'font-family: Allerta Stencil\'>ICE</span></div>'">
             <span class="text-white">PROSOUND</span>
+            
         </div>
         <!-- 🧭 Continuous Navigation Controls (Desktop) -->
         <div class="hidden md:flex items-center bg-slate-900/90 border border-slate-700/80 rounded-xl p-1 gap-1 shadow-inner mr-4">
@@ -148,13 +149,17 @@
         </div>
 
         <!-- เมนูหลัก ซ่อนบนมือถือ แสดงบนคอม (hidden md:flex) -->
-        <div class="hidden md:flex space-x-6 text-lg">
+        <div class="hidden md:flex space-x-6 text-lg items-center">
             <button onclick="showDashboard()" class="hover:text-blue-400 transition">แดชบอร์ด</button>
-            <button onclick="showReport()" class="hover:text-blue-400 transition">📊 รายงาน</button>
+            <button onclick="showReport()" class="hover:text-blue-400 transition relative inline-flex items-center">
+                <span>📊 รายงาน</span>
+                <span id="idx-badge-reports-alert" style="display: none; background: #e11d48; color: #ffffff; border-radius: 9999px; padding: 2px 7px; font-size: 11px; font-weight: 800; margin-left: 6px; box-shadow: 0 0 10px rgba(225,29,72,0.8); line-height: 1;" class="animate-pulse">0</span>
+            </button>
             <button onclick="showStore()" class="hover:text-blue-400 transition text-blue-400">งานช่าง (เบิก/ยืม)</button>
                 <!-- 🔒 Admin Login Button (Replacing the complex Settings Menu) -->
-                <button onclick="window.location.href='admin.html'" class="hover:text-blue-400 text-gray-500 transition flex items-center gap-1 text-sm border border-gray-700 px-3 rounded-full">
-                    🔒 Admin Login
+                <button onclick="window.location.href='admin.html'" class="hover:text-blue-400 text-gray-500 transition flex items-center gap-1 text-sm border border-gray-700 px-3 rounded-full relative">
+                    <span>🔒 Admin Login</span>
+                    <span id="idx-badge-admin-alert" style="display: none; background: #e11d48; color: #ffffff; border-radius: 9999px; padding: 1px 6px; font-size: 10px; font-weight: 800; margin-left: 5px; box-shadow: 0 0 8px rgba(225,29,72,0.8); line-height: 1;" class="animate-pulse">0</span>
                 </button>
         </div>
         <div class="flex items-center space-x-2">
@@ -187,14 +192,22 @@
             <!-- SECTION: รายงาน (REPORT) -->
             <!-- ============================================== -->
             <section id="reportSection" class="hidden animate-fade-in space-y-6">
-                <div class="flex justify-between items-end border-b border-gray-700 pb-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-gray-700 pb-4 gap-3">
                     <div>
-                        <h1 class="text-3xl font-bold text-white mb-2">📊 รายงานการเบิก-ยืมอุปกรณ์</h1>
-                        <p class="text-gray-400">ภาพรวมข้อมูลพนักงานและไซต์งาน (Real-time Firebase)</p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">📊 รายงานการเบิก-ยืมอุปกรณ์</h1>
+                        <p class="text-gray-400 text-sm">ภาพรวมข้อมูลพนักงานและไซต์งาน (Real-time Firebase)</p>
                     </div>
-                    <button onclick="loadReportData()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-white transition flex items-center gap-2">
-                        <span>🔄 รีเฟรชข้อมูล</span>
-                    </button>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="exportRequisitionsSummaryToExcel()" class="bg-emerald-600 hover:bg-emerald-500 px-3.5 py-2 rounded text-white font-semibold transition flex items-center gap-1.5 shadow text-sm" title="ส่งออกข้อมูลใบเบิกเป็น Excel">
+                            <span>📊 ส่งออก Excel</span>
+                        </button>
+                        <button onclick="printRequisitionsSummaryReport()" class="bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 rounded text-white font-semibold transition flex items-center gap-1.5 shadow text-sm" title="พิมพ์รายงานสรุปใบเบิก / บันทึก PDF (A4 แนวนอน)">
+                            <span>🖨️ พิมพ์ / PDF</span>
+                        </button>
+                        <button onclick="loadReportData()" class="bg-gray-700 hover:bg-gray-600 px-3.5 py-2 rounded text-white transition flex items-center gap-1.5 text-sm">
+                            <span>🔄 รีเฟรชข้อมูล</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- ตารางแสดงข้อมูล -->
@@ -363,8 +376,11 @@
                 <span class="text-[10px] mt-1">หน้าหลัก</span>
             </button>
             <!-- 2. รายงาน -->
-            <button onclick="showReport()" class="flex-1 flex flex-col items-center p-2 text-gray-400 hover:text-blue-400 transition">
-                <span class="text-xl">📊</span>
+            <button onclick="showReport()" class="flex-1 flex flex-col items-center p-2 text-gray-400 hover:text-blue-400 transition relative">
+                <span class="relative inline-block">
+                    <span class="text-xl">📊</span>
+                    <span id="idx-mob-badge-reports-alert" style="display: none; position: absolute; -top: 6px; -right: 12px; background: #e11d48; color: #ffffff; border-radius: 9999px; padding: 1px 5px; font-size: 9px; font-weight: 800; line-height: 1;" class="animate-pulse">0</span>
+                </span>
                 <span class="text-[10px] mt-1">รายงาน</span>
             </button>
             <!-- 3. งานช่าง (เบิกของ) - ปุ่มเด่นตรงกลาง -->
@@ -544,10 +560,18 @@
             </div>
 
             <!-- Controls -->
+            <!-- Native Camera & File Fallback (100% Reliable on all phones) -->
+            <input type="file" id="qrFileInput" accept="image/*" capture="environment" class="hidden" onchange="handleQrFile(event)">
+
             <div class="flex justify-between items-center pt-2 border-t border-slate-700 text-xs text-slate-400">
-                <button type="button" onclick="switchScannerCamera()" id="switchCameraBtn" class="hover:text-white flex items-center gap-1 transition">
-                    🔄 สลับกล้อง
-                </button>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="switchScannerCamera()" id="switchCameraBtn" class="hover:text-white flex items-center gap-1 transition">
+                        🔄 สลับกล้อง
+                    </button>
+                    <button type="button" onclick="document.getElementById('qrFileInput').click()" class="text-blue-400 hover:text-blue-300 flex items-center gap-1 transition font-medium">
+                        📸 ถ่ายรูปสแกน
+                    </button>
+                </div>
                 <button type="button" onclick="closeScannerModal()" class="px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition">
                     ปิดหน้าต่าง
                 </button>
@@ -1415,8 +1439,8 @@
         // ==========================================
         
         // 9.5 ฟังก์ชันพิมพ์ใบเบิก/ยืม A4 (สากล)
-                function printRequisitionA4(data, items) {
-            const printWindow = window.open('', '_blank', 'width=950,height=1200');
+                function printRequisitionA4(data, items, existingWindow = null) {
+            const printWindow = existingWindow || window.open('', '_blank', 'width=950,height=1200');
             
             if (!printWindow) {
                 alert('⚠️ ระบบไม่สามารถเปิดหน้าต่างพิมพ์ได้ (Pop-up ถูกบล็อก)\n\n👉 กรุณาไปที่สัญลักษณ์ แม่กุญแจ/แจ้งเตือน บนแถบ URL ของเบราว์เซอร์\n👉 และเลือก "อนุญาต Pop-ups (Allow pop-ups)" สำหรับเว็บไซต์นี้ค่ะ');
@@ -1433,10 +1457,13 @@
             (items || []).forEach((item, index) => {
                 tableRows += `
                     <tr>
-                        <td style="border: 1px solid #475569; padding: 8px 6px; text-align: center; white-space: nowrap; font-weight: 600;">${index + 1}</td>
-                        <td style="border: 1px solid #475569; padding: 8px 10px; text-align: left; line-height: 1.4; word-break: break-word;">${item.name || '-'}</td>
-                        <td style="border: 1px solid #475569; padding: 8px 12px; text-align: right; white-space: nowrap; font-weight: 600;">${item.qty || 0} ${item.unit || 'ชิ้น'}</td>
-                        <td style="border: 1px solid #475569; padding: 8px 8px; text-align: center; color: #475569;">${item.note || ''}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 2px; text-align: center; white-space: nowrap; font-weight: 600; font-size: 12px;">${index + 1}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 8px; text-align: left; line-height: 1.35; word-break: break-word;">${item.name || '-'}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 2px; text-align: center; white-space: nowrap; font-weight: 600; font-size: 11.5px;">${item.qty || 0} ${item.unit || 'ชิ้น'}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 2px; text-align: center; color: #000000; font-size: 12px;">${item.issuedQty !== undefined && item.issuedQty !== null && item.issuedQty !== '' ? item.issuedQty : ''}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 2px; text-align: center; color: #000000; font-size: 12px;">${item.missingQty !== undefined && item.missingQty !== null && item.missingQty !== '' ? item.missingQty : ''}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 2px; text-align: center; color: #000000; font-size: 12px;">${item.returnedQty !== undefined && item.returnedQty !== null && item.returnedQty !== '' ? item.returnedQty : ''}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 4px; text-align: center; color: #000000; font-size: 12px;">${item.note || ''}</td>
                     </tr>
                 `;
             });
@@ -1448,10 +1475,13 @@
                 for (let i = currentLen; i < minRows; i++) {
                     tableRows += `
                         <tr style="height: 30px;">
-                            <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center; color: #94a3b8; font-size: 12px;">${i + 1}</td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 10px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 12px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 6px 8px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 2px; text-align: center; color: #000000; font-size: 12px;">${i + 1}</td>
+                            <td style="border: 1px solid #000000; padding: 6px 8px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 2px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 2px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 2px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 2px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 4px;"></td>
                         </tr>
                     `;
                 }
@@ -1577,18 +1607,19 @@
                         table { 
                             width: 100%;
                             border-collapse: collapse; 
+                            border: 1px solid #000000;
                             margin-bottom: 16px; 
                             font-size: 13.5px;
                             table-layout: fixed;
                         }
                         th { 
                             background-color: #f1f5f9; 
-                            border: 1px solid #475569; 
+                            border: 1px solid #000000; 
                             padding: 8px 6px; 
                             font-weight: 700;
                             text-align: center;
                             white-space: nowrap;
-                            color: #0f172a;
+                            color: #000000;
                         }
                         /* กล่องเงื่อนไขและข้อกำหนดสากล */
                         .terms-box {
@@ -1684,8 +1715,15 @@
                                     <div class="info-row">
                                         <span class="info-label" style="width: 110px;">วันที่ทำรายการ :</span>
                                         <span class="info-val">${(() => {
-                                            if (data.date) return data.date;
-                                            if (data.createdAt && data.createdAt.toDate) return data.createdAt.toDate().toLocaleDateString('th-TH');
+                                            if (data.createdAt && data.createdAt.toDate) {
+                                                const d = data.createdAt.toDate();
+                                                return `${d.toLocaleDateString('th-TH')} ${d.toLocaleTimeString('th-TH')}`;
+                                            }
+                                            if (data.date) {
+                                                if (data.time) return `${data.date} ${data.time}`;
+                                                if (data.date.includes(':')) return data.date;
+                                                return `${data.date} ${new Date().toLocaleTimeString('th-TH')}`;
+                                            }
                                             return dateStr;
                                         })()}</span>
                                     </div>
@@ -1713,10 +1751,13 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th style="width: 6%;">ลำดับ</th>
-                                    <th style="width: 64%; text-align: center;">รายการอุปกรณ์</th>
-                                    <th style="width: 15%; text-align: center;">จำนวน</th>
-                                    <th style="width: 15%; text-align: center;">หมายเหตุ</th>
+                                    <th style="width: 5%; text-align: center; font-size: 12px; padding: 7px 2px; white-space: nowrap; vertical-align: middle;">ลำดับ</th>
+                                    <th style="width: 50%; text-align: center; font-size: 13px; padding: 7px 6px; vertical-align: middle;">รายการอุปกรณ์</th>
+                                    <th style="width: 8%; text-align: center; font-size: 11px; padding: 7px 1px; white-space: nowrap; letter-spacing: -0.3px; vertical-align: middle;">จำนวนเบิก</th>
+                                    <th style="width: 7.5%; text-align: center; font-size: 11px; padding: 7px 1px; white-space: nowrap; letter-spacing: -0.3px; vertical-align: middle;">จำนวนจ่าย</th>
+                                    <th style="width: 7.5%; text-align: center; font-size: 11px; padding: 7px 1px; white-space: nowrap; letter-spacing: -0.3px; vertical-align: middle;">จำนวนขาด</th>
+                                    <th style="width: 7.5%; text-align: center; font-size: 11px; padding: 7px 1px; white-space: nowrap; letter-spacing: -0.3px; vertical-align: middle;">จำนวนคืน</th>
+                                    <th style="width: 14.5%; text-align: center; font-size: 12px; padding: 7px 4px; white-space: nowrap; vertical-align: middle;">หมายเหตุ</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1746,10 +1787,22 @@
                             <div class="sig-box">
                                 <div class="sig-line"></div>
                                 <p class="sig-name">( ${isReturned ? (data.techName || data.technician || '.............................................') : (data.issuerName || '.............................................')} )</p>
-                                <p class="sig-title">${isReturned ? 'ผู้ส่งคืน' : 'ผู้ให้เบิก / ผู้จ่ายสินค้า'}</p>
+                                <p class="sig-title">${isReturned ? 'ผู้ส่งคืน' : 'ผู้ให้เบิก / ผู้จ่ายสินค้า/ผู้จัดสินค้า'}</p>
                                 <p class="sig-date">วันที่ ......./......./.......</p>
                             </div>
                         </div>
+                        ${(() => {
+                            if (data && data.pickingProofImage) {
+                                return `
+                                    <div style="page-break-before: always; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #475569; text-align: center;">
+                                        <div style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">📷 เอกสารหลักฐานใบจัดสินค้าที่ช่างกรอกด้วยมือ</div>
+                                        <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">เอกสารเลขที่: ${data.docNo || '-'} | ผู้เบิก/ช่าง: ${data.techName || data.technician || '-'} | ไซต์งาน: ${data.jobSite || '-'}</div>
+                                        <img src="${data.pickingProofImage}" style="max-width: 95%; max-height: 800px; border: 1px solid #94a3b8; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);" />
+                                    </div>
+                                `;
+                            }
+                            return '';
+                        })()}
                     </div>
                 </body>
                 </html>
@@ -1935,6 +1988,18 @@
                                 <p class="sig-date">วันที่ ......./......./.......</p>
                             </div>
                         </div>
+                        ${(() => {
+                            if (data && data.pickingProofImage) {
+                                return `
+                                    <div style="page-break-before: always; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #475569; text-align: center;">
+                                        <div style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">📷 เอกสารหลักฐานใบจัดสินค้าที่ช่างกรอกด้วยมือ</div>
+                                        <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">เอกสารเลขที่: ${data.docNo || '-'} | ผู้เบิก/ช่าง: ${data.techName || data.technician || '-'} | ไซต์งาน: ${data.jobSite || '-'}</div>
+                                        <img src="${data.pickingProofImage}" style="max-width: 95%; max-height: 800px; border: 1px solid #94a3b8; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);" />
+                                    </div>
+                                `;
+                            }
+                            return '';
+                        })()}
                     </div>
                 </body>
                 </html>
@@ -2268,20 +2333,27 @@
         }
 
 
-        async function printRequisition(docId) {
-            try {
-                const doc = await db.collection('requisitions').doc(docId).get();
+        function printRequisition(docId) {
+            // เปิดหน้าต่างเตรียมไว้ทันทีที่คลิก เพื่อไม่ให้ถูกเบราว์เซอร์บล็อก Pop-up
+            const preOpenedWindow = window.open('', '_blank', 'width=950,height=1200');
+            db.collection('requisitions').doc(docId).get().then(doc => {
                 if (!doc.exists) {
+                    if (preOpenedWindow) preOpenedWindow.close();
                     alert('❌ ไม่พบข้อมูลใบเบิกนี้');
                     return;
                 }
                 const data = doc.data();
+                data.id = doc.id;
                 const items = data.items || [];
-                printRequisitionA4(data, items);
-            } catch (error) {
+                if (typeof markRequisitionPickingPrinted === 'function') {
+                    markRequisitionPickingPrinted(docId);
+                }
+                printRequisitionA4(data, items, preOpenedWindow);
+            }).catch(error => {
+                if (preOpenedWindow) preOpenedWindow.close();
                 console.error("Error fetching for print: ", error);
                 alert('❌ เกิดข้อผิดพลาดในการดึงข้อมูลมาพิมพ์: ' + error.message);
-            }
+            });
         }
 
         // 10.2 ฟังก์ชันดึงข้อมูลมาแก้ไข
@@ -2331,6 +2403,338 @@
                 console.error("Error editing document: ", error);
                 alert('❌ เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message);
             }
+        }
+
+        // ========================================================
+        // 🌟 REAL-TIME BADGE & PICKING FORM CONTROLLERS (INDEX.HTML)
+        // ========================================================
+        let indexRequisitionAlertUnsubscribe = null;
+
+        function updateIndexRequisitionBadge(count) {
+            const badgeReports = document.getElementById('idx-badge-reports-alert');
+            const badgeAdmin = document.getElementById('idx-badge-admin-alert');
+            const mobBadgeReports = document.getElementById('idx-mob-badge-reports-alert');
+            const displayStyle = (count && count > 0) ? 'inline-flex' : 'none';
+
+            if (badgeReports) {
+                badgeReports.textContent = count || 0;
+                badgeReports.style.display = displayStyle;
+            }
+            if (badgeAdmin) {
+                badgeAdmin.textContent = count || 0;
+                badgeAdmin.style.display = displayStyle;
+            }
+            if (mobBadgeReports) {
+                mobBadgeReports.textContent = count || 0;
+                mobBadgeReports.style.display = displayStyle;
+            }
+        }
+
+        function initIndexRequisitionAlertBadge() {
+            if (typeof db === 'undefined') return;
+            try {
+                if (indexRequisitionAlertUnsubscribe) indexRequisitionAlertUnsubscribe();
+                indexRequisitionAlertUnsubscribe = db.collection('requisitions')
+                    .onSnapshot(snapshot => {
+                        let unprintedCount = 0;
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const isPending = !data.returnStatus || data.returnStatus === 'ยังไม่คืน';
+                            if (isPending && !data.isPrintedForPicking) {
+                                unprintedCount++;
+                            }
+                        });
+                        updateIndexRequisitionBadge(unprintedCount);
+                    }, err => {
+                        console.error("Index requisition badge listener error:", err);
+                    });
+            } catch (err) {
+                console.error("Error setting up index requisition badge listener:", err);
+            }
+        }
+
+        async function markRequisitionPickingPrinted(docId) {
+            try {
+                await db.collection('requisitions').doc(docId).update({
+                    isPrintedForPicking: true,
+                    pickingPrintedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (err) {
+                console.error("markRequisitionPickingPrinted error:", err);
+            }
+        }
+
+        function printPickingForm(docId) {
+            // เปิดหน้าต่างเตรียมไว้ทันทีที่คลิก เพื่อไม่ให้ถูกเบราว์เซอร์บล็อก Pop-up
+            const preOpenedWindow = window.open('', '_blank', 'width=950,height=1200');
+            db.collection('requisitions').doc(docId).get().then(doc => {
+                if (!doc.exists) {
+                    if (preOpenedWindow) preOpenedWindow.close();
+                    alert('❌ ไม่พบข้อมูลใบเบิกนี้');
+                    return;
+                }
+                const data = doc.data();
+                data.id = doc.id;
+                const items = data.items || [];
+                markRequisitionPickingPrinted(docId);
+                printPickingFormA4(data, items, preOpenedWindow);
+                if (typeof loadReportData === 'function') {
+                    loadReportData();
+                }
+            }).catch(err => {
+                if (preOpenedWindow) preOpenedWindow.close();
+                alert("❌ เกิดข้อผิดพลาดในการดึงข้อมูลใบจัดสินค้า: " + err.message);
+            });
+        }
+
+        function printPickingFormA4(data, items, existingWindow = null) {
+            const printWindow = existingWindow || window.open('', '_blank', 'width=950,height=1200');
+            if (!printWindow) {
+                alert('⚠️ ระบบไม่สามารถเปิดหน้าต่างพิมพ์ได้ (Pop-up ถูกบล็อก)\n\n👉 กรุณาไปที่สัญลักษณ์ แม่กุญแจ/แจ้งเตือน บนแถบ URL ของเบราว์เซอร์\n👉 และเลือก "อนุญาต Pop-ups (Allow pop-ups)" สำหรับเว็บไซต์นี้ค่ะ');
+                return;
+            }
+
+            const dateStr = new Date().toLocaleString('th-TH');
+            const docTitle = 'ใบจัดสินค้าอุปกรณ์';
+            const docSubtitle = 'EQUIPMENT PREPARATION & PICKING ORDER';
+
+            let tableRows = '';
+            (items || []).forEach((item, index) => {
+                const issuedDisplay = (item.issuedQty !== undefined && item.issuedQty !== null && item.issuedQty !== '') ? item.issuedQty : '';
+                tableRows += `
+                    <tr>
+                        <td style="border: 1px solid #000000; padding: 7px 2px; text-align: center; white-space: nowrap; font-weight: 600; font-size: 12px;">${index + 1}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 8px; text-align: left; line-height: 1.35; word-break: break-word;">${item.name || '-'}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 2px; text-align: center; white-space: nowrap; font-weight: 600; font-size: 11.5px;">${item.qty || 0} ${item.unit || 'ชิ้น'}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 2px; text-align: center; color: #000000; font-size: 12px; font-weight: bold;">${issuedDisplay}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 2px; text-align: center; color: #000000; font-size: 12px;">${item.missingQty !== undefined && item.missingQty !== null && item.missingQty !== '' ? item.missingQty : ''}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 2px; text-align: center; color: #000000; font-size: 12px;">${item.returnedQty !== undefined && item.returnedQty !== null && item.returnedQty !== '' ? item.returnedQty : ''}</td>
+                        <td style="border: 1px solid #000000; padding: 7px 4px; text-align: center; color: #000000; font-size: 12px;">${item.note || ''}</td>
+                    </tr>
+                `;
+            });
+
+            const minRows = 10;
+            const currentLen = (items || []).length;
+            if (currentLen < minRows) {
+                for (let i = currentLen; i < minRows; i++) {
+                    tableRows += `
+                        <tr style="height: 30px;">
+                            <td style="border: 1px solid #000000; padding: 6px 2px; text-align: center; color: #000000; font-size: 12px;">${i + 1}</td>
+                            <td style="border: 1px solid #000000; padding: 6px 8px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 2px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 2px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 2px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 2px;"></td>
+                            <td style="border: 1px solid #000000; padding: 6px 4px;"></td>
+                        </tr>
+                    `;
+                }
+            }
+
+            let proofAttachmentHtml = '';
+            if (data && data.pickingProofImage) {
+                proofAttachmentHtml = `
+                    <div style="page-break-before: always; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #475569; text-align: center;">
+                        <div style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">📷 เอกสารหลักฐานใบจัดสินค้าที่ช่างกรอกด้วยมือ</div>
+                        <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">เอกสารเลขที่: ${data.docNo || '-'} | ผู้เบิก/ช่าง: ${data.techName || data.technician || '-'} | ไซต์งาน: ${data.jobSite || '-'}</div>
+                        <img src="${data.pickingProofImage}" style="max-width: 95%; max-height: 800px; border: 1px solid #94a3b8; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);" />
+                    </div>
+                `;
+            }
+
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html lang="th">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${docTitle} - ${data.docNo || ''}</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap');
+                        @page { size: A4 portrait; margin: 0; }
+                        * { box-sizing: border-box; }
+                        body { 
+                            font-family: 'Sarabun', sans-serif; 
+                            padding: 12mm 15mm; 
+                            margin: 0;
+                            color: #0f172a; 
+                            background-color: #fff;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .container { width: 100%; max-width: 100%; margin: 0 auto; }
+                        .header-wrapper {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            border-bottom: 2px solid #0f172a;
+                            padding-bottom: 12px;
+                            margin-bottom: 14px;
+                        }
+                        .company-block { text-align: left; }
+                        .company-name { font-size: 24px; font-weight: 800; color: #0f172a; margin: 0; text-transform: uppercase; }
+                        .company-subtitle { font-size: 12px; color: #64748b; margin-top: 3px; font-weight: 500; }
+                        .doc-block { text-align: right; }
+                        .doc-badge {
+                            display: inline-block;
+                            background-color: #f59e0b;
+                            color: #000;
+                            font-size: 18px;
+                            font-weight: 800;
+                            padding: 5px 16px;
+                            border-radius: 6px;
+                            border: 1px solid #d97706;
+                        }
+                        .doc-badge-en { font-size: 10.5px; font-weight: 700; color: #475569; margin-top: 4px; letter-spacing: 0.5px; }
+                        .info-box {
+                            background-color: #f8fafc;
+                            border: 1px solid #cbd5e1;
+                            border-radius: 8px;
+                            padding: 12px 14px;
+                            margin-bottom: 14px;
+                            font-size: 12.5px;
+                        }
+                        .info-grid { display: flex; justify-content: space-between; gap: 15px; }
+                        .info-col-left { flex: 1.1; }
+                        .info-col-right { flex: 0.9; }
+                        .info-row { display: flex; margin-bottom: 5px; align-items: baseline; }
+                        .info-label { font-weight: 700; color: #334155; flex-shrink: 0; }
+                        .info-val { color: #0f172a; margin-left: 8px; word-break: break-word; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px; }
+                        th {
+                            background-color: #f1f5f9;
+                            border: 1px solid #000000;
+                            font-weight: 700;
+                            color: #0f172a;
+                        }
+                        td { border: 1px solid #000000; }
+                        .sig-section {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-top: 25px;
+                            padding-top: 10px;
+                        }
+                        .sig-box {
+                            text-align: center;
+                            width: 30%;
+                            font-size: 12px;
+                        }
+                        .sig-line {
+                            border-bottom: 1px dotted #64748b;
+                            margin-bottom: 8px;
+                            height: 45px;
+                        }
+                        .sig-name { font-weight: 600; color: #0f172a; margin: 0 0 3px 0; }
+                        .sig-title { color: #64748b; margin: 0 0 3px 0; font-size: 11px; }
+                        .sig-date { color: #94a3b8; margin: 0; font-size: 10.5px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header-wrapper">
+                            <div class="company-block">
+                                <h1 class="company-name">ICE PROSOUND</h1>
+                                <div class="company-subtitle">ระบบบริหารจัดการคลังสินค้าและอุปกรณ์จัดงานเวที แสง สี เสียง</div>
+                            </div>
+                            <div class="doc-block">
+                                <div class="doc-badge">${docTitle}</div>
+                                <div class="doc-badge-en">${docSubtitle}</div>
+                            </div>
+                        </div>
+
+                        <div class="info-box">
+                            <div class="info-grid">
+                                <div class="info-col-left">
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 100px;">เลขที่เอกสาร :</span>
+                                        <span class="info-val" style="font-weight: 800; font-size: 13.5px; color: #b45309;">${data.docNo || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 100px;">ผู้เบิก / ช่าง :</span>
+                                        <span class="info-val" style="font-weight: 700;">${data.techName || data.technician || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 100px;">ชื่อ-สกุลจริง :</span>
+                                        <span class="info-val">${data.techFullName || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 100px;">วันที่พิมพ์ใบจัด :</span>
+                                        <span class="info-val">${dateStr}</span>
+                                    </div>
+                                </div>
+                                <div class="info-col-right">
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 110px;">ชื่องาน / ไซต์งาน :</span>
+                                        <span class="info-val" style="font-weight: 700;">${data.jobSite || data.siteName || data.site || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 110px;">ผู้รับผิดชอบงาน :</span>
+                                        <span class="info-val">${data.jobSale || data.sales || data.receiverName || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 110px;">สถานที่จัดส่ง :</span>
+                                        <span class="info-val">${data.jobAddress || data.deliveryAddress || data.address || data.siteAddress || '-'}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label" style="width: 110px;">พิกัด / แผนที่ :</span>
+                                        <span class="info-val">${(() => {
+                                            const rawGps = (data.jobGps || data.mapLink || data.gps || data.map || data.locationMap || '').trim();
+                                            if (!rawGps) return '-';
+                                            const mapHref = rawGps.startsWith('http') ? rawGps : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawGps)}`;
+                                            return `<a href="${mapHref}" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 600;">เปิดแผนที่ Google Maps 📍</a>`;
+                                        })()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 5%; text-align: center; font-size: 12px; padding: 7px 2px; white-space: nowrap; vertical-align: middle;">ลำดับ</th>
+                                    <th style="width: 50%; text-align: center; font-size: 12px; padding: 7px 8px; white-space: nowrap; vertical-align: middle;">รายการอุปกรณ์</th>
+                                    <th style="width: 8%; text-align: center; font-size: 12px; padding: 7px 2px; white-space: nowrap; vertical-align: middle;">จำนวนเบิก</th>
+                                    <th style="width: 8%; text-align: center; font-size: 12px; padding: 7px 2px; white-space: nowrap; vertical-align: middle;">จำนวนจ่ายจริง</th>
+                                    <th style="width: 8%; text-align: center; font-size: 12px; padding: 7px 2px; white-space: nowrap; vertical-align: middle;">จำนวนขาด</th>
+                                    <th style="width: 8%; text-align: center; font-size: 12px; padding: 7px 2px; white-space: nowrap; vertical-align: middle;">จำนวนคืน</th>
+                                    <th style="width: 13%; text-align: center; font-size: 12px; padding: 7px 4px; white-space: nowrap; vertical-align: middle;">หมายเหตุ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+
+                        <div class="sig-section">
+                            <div class="sig-box">
+                                <div class="sig-line"></div>
+                                <p class="sig-name">( ${data.issuerName || data.pickerName || '.............................................'} )</p>
+                                <p class="sig-title">ผู้จัดสินค้า / สโตร์</p>
+                                <p class="sig-date">วันที่ ......./......./.......</p>
+                            </div>
+                            <div class="sig-box">
+                                <div class="sig-line"></div>
+                                <p class="sig-name">( ${data.techName || data.technician || '.............................................'} )</p>
+                                <p class="sig-title">ผู้ตรวจรับ / ช่างผู้เบิก</p>
+                                <p class="sig-date">วันที่ ......./......./.......</p>
+                            </div>
+                            <div class="sig-box">
+                                <div class="sig-line"></div>
+                                <p class="sig-name">( ${data.approverName || '.............................................'} )</p>
+                                <p class="sig-title">ผู้อนุมัติจ่ายสินค้า</p>
+                                <p class="sig-date">วันที่ ......./......./.......</p>
+                            </div>
+                        </div>
+
+                        ${proofAttachmentHtml}
+                    </div>
+                </body>
+                </html>
+            `;
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); }, 600);
         }
 
         // ==========================================
@@ -2677,6 +3081,295 @@
             loadStaffData(); // เรียกฟังก์ชันโหลดข้อมูลพนักงาน (จะสร้างด้านล่าง)
         }
 
+        
+        // =========================================================================
+        // 🖨️ ระบบพิมพ์รายงานสรุปใบเบิก A4 แนวนอน (A4 Landscape Print/PDF Summary)
+        // =========================================================================
+        let cachedRequisitionsForReport = [];
+
+        async function printRequisitionsSummaryReport() {
+            let listToPrint = cachedRequisitionsForReport;
+            if (!listToPrint || listToPrint.length === 0) {
+                try {
+                    const snap = await db.collection('requisitions').orderBy('createdAt', 'desc').limit(50).get();
+                    listToPrint = [];
+                    snap.forEach(d => { const item = d.data(); item.id = d.id; listToPrint.push(item); });
+                } catch(e) {
+                    alert("❌ เกิดข้อผิดพลาดในการดึงข้อมูล: " + e.message);
+                    return;
+                }
+            }
+
+            if (!listToPrint || listToPrint.length === 0) {
+                alert("❌ ไม่มีข้อมูลรายการใบเบิกให้พิมพ์รายงาน");
+                return;
+            }
+
+            const totalOrders = listToPrint.length;
+            const totalItemsCount = listToPrint.reduce((sum, doc) => {
+                return sum + ((doc.items || []).reduce((s, it) => s + (parseInt(it.qty) || 0), 0));
+            }, 0);
+
+            let rowsHtml = '';
+            listToPrint.forEach((data, index) => {
+                let dateStr = '-';
+                if (data.createdAt) {
+                    try {
+                        const d = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                        dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+                    } catch(e) { dateStr = '-'; }
+                }
+                const docNo = data.docNo || data.id.slice(0, 8);
+                const tech = data.techName || data.technician || data.techFullName || '-';
+                const site = data.jobSite || data.siteName || data.site || '-';
+                const sale = data.jobSale || data.sales || '-';
+                const totalQty = (data.items || []).reduce((sum, it) => sum + (parseInt(it.qty) || 0), 0);
+                const status = data.returnStatus || 'ยังไม่คืน';
+                
+                let statusColor = '#b45309';
+                if (status === 'รับคืนแล้ว') statusColor = '#15803d';
+                else if (status === 'คืนบางส่วน') statusColor = '#c2410c';
+
+                rowsHtml += `
+                    <tr>
+                        <td style="border: 1px solid #334155; padding: 5px 6px; text-align: center; font-weight: bold;">${index + 1}</td>
+                        <td style="border: 1px solid #334155; padding: 5px 6px; text-align: center; font-family: monospace; font-weight: bold; color: #1e3a8a;">${docNo}</td>
+                        <td style="border: 1px solid #334155; padding: 5px 6px; text-align: center; font-family: monospace; font-size: 10px;">${dateStr}</td>
+                        <td style="border: 1px solid #334155; padding: 5px 6px; font-weight: 600;">${tech}</td>
+                        <td style="border: 1px solid #334155; padding: 5px 6px; color: #0f172a;">${site}</td>
+                        <td style="border: 1px solid #334155; padding: 5px 6px;">${sale}</td>
+                        <td style="border: 1px solid #334155; padding: 5px 6px; text-align: center; font-weight: bold; font-size: 11px;">${totalQty}</td>
+                        <td style="border: 1px solid #334155; padding: 5px 6px; text-align: center; font-weight: bold; color: ${statusColor};">${status}</td>
+                        <td style="border: 1px solid #334155; padding: 5px 6px; text-align: center; font-size: 10px;">${data.isPrintedForPicking ? '✓ จัดของแล้ว' : 'รอจัดของ'}</td>
+                    </tr>
+                `;
+            });
+
+            const printWindow = window.open('', '_blank', 'width=1150,height=800');
+            if (!printWindow) {
+                alert('⚠️ ระบบไม่สามารถเปิดหน้าต่างพิมพ์ได้ (Pop-up ถูกบล็อก)\n\n👉 กรุณาอนุญาต Pop-ups สำหรับเว็บไซต์นี้ค่ะ');
+                return;
+            }
+
+            const printContent = `
+                <!DOCTYPE html>
+                <html lang="th">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>รายงานสรุปใบเบิกและอุปกรณ์ - ICEPROSOUND</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+                        @page { size: A4 landscape; margin: 8mm; }
+                        * { box-sizing: border-box; }
+                        body { font-family: 'Sarabun', sans-serif; padding: 10px; color: #000; font-size: 11px; margin: 0; }
+                        .header { text-align: center; margin-bottom: 12px; border-bottom: 2px solid #0f172a; padding-bottom: 8px; }
+                        .company-name { font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px; }
+                        .doc-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+                        .meta { font-size: 11px; color: #475569; margin-top: 4px; display: flex; justify-content: space-between; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th { background-color: #1e293b; color: #ffffff !important; font-weight: 700; text-align: center; border: 1px solid #334155; padding: 6px 6px; font-size: 10.5px; }
+                        tr:nth-child(even) { background-color: #f8fafc; }
+                        .summary-bar { margin-top: 10px; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 4px; display: flex; justify-content: space-between; font-weight: 700; font-size: 11.5px; }
+                        .signatures { margin-top: 25px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; page-break-inside: avoid; }
+                        .sign-box { border: 1px dashed #64748b; padding: 10px; text-align: center; border-radius: 6px; background: #fafafa; }
+                        .sign-line { border-bottom: 1px solid #000; width: 80%; margin: 35px auto 6px auto; }
+                        @media print {
+                            body { padding: 0; }
+                            .no-print { display: none !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="company-name">🎧 บริษัท ไอซ์โปรซาวด์ จำกัด (ICEPROSOUND CO., LTD.)</div>
+                        <div class="doc-title">รายงานสรุปภาพรวมใบเบิกและอุปกรณ์ (Requisition Summary Report)</div>
+                        <div class="meta">
+                            <span><strong>ข้อมูล:</strong> รายการล่าสุดจากระบบ Real-time</span>
+                            <span><strong>พิมพ์เอกสารเมื่อ:</strong> ${new Date().toLocaleDateString('th-TH')} ${new Date().toLocaleTimeString('th-TH')}</span>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 35px;">ลำดับ</th>
+                                <th style="width: 110px;">เลขที่ใบเบิก</th>
+                                <th style="width: 105px;">วันเวลาเบิก</th>
+                                <th>ช่าง / ผู้เบิก</th>
+                                <th>ไซต์งาน / สถานที่</th>
+                                <th>ผู้จ่ายงาน / เซลล์</th>
+                                <th style="width: 80px;">จำนวนอุปกรณ์</th>
+                                <th style="width: 110px;">สถานะการคืน</th>
+                                <th style="width: 90px;">ใบจัดสินค้า</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+
+                    <div class="summary-bar">
+                        <span>จำนวนใบเบิกทั้งหมด: <strong>${totalOrders}</strong> รายการ</span>
+                        <span>จำนวนอุปกรณ์รวมทั้งหมด: <strong>${totalItemsCount}</strong> ชิ้น</span>
+                    </div>
+
+                    <div class="signatures">
+                        <div class="sign-box">
+                            <div>ลงชื่อ ..................................................... ผู้จัดทำรายงาน</div>
+                            <div class="sign-line"></div>
+                            <div>( ..................................................... )</div>
+                            <div style="font-size: 10px; color: #64748b; margin-top: 4px;">วันที่ ......./......./...........</div>
+                        </div>
+                        <div class="sign-box">
+                            <div>ลงชื่อ ..................................................... ผู้จัดการคลังสินค้า</div>
+                            <div class="sign-line"></div>
+                            <div>( ..................................................... )</div>
+                            <div style="font-size: 10px; color: #64748b; margin-top: 4px;">วันที่ ......./......./...........</div>
+                        </div>
+                        <div class="sign-box">
+                            <div>ลงชื่อ ..................................................... กรรมการผู้มีอำนาจ / ผู้อนุมัติ</div>
+                            <div class="sign-line"></div>
+                            <div>( ..................................................... )</div>
+                            <div style="font-size: 10px; color: #64748b; margin-top: 4px;">วันที่ ......./......./...........</div>
+                        </div>
+                    </div>
+
+                    <script>
+                        window.onload = function() {
+                            setTimeout(() => {
+                                window.print();
+                            }, 400);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            printWindow.document.open();
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+        }
+
+        
+        async function resetPickingStatus(docId) {
+            if (!confirm("⚠️ ต้องการรีเซ็ตสถานะใบจัดสินค้านี้กลับเป็น 'รอพิมพ์ใบจัดสินค้า' หรือไม่?")) {
+                return;
+            }
+            try {
+                await db.collection('requisitions').doc(docId).update({
+                    isPrintedForPicking: false,
+                    printedPickingAt: firebase.firestore.FieldValue.delete(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                if (typeof loadReportData === 'function') loadReportData();
+                alert("✅ รีเซ็ตสถานะใบจัดสินค้าเรียบร้อยแล้วค่ะ!");
+            } catch (err) {
+                alert("❌ เกิดข้อผิดพลาดในการรีเซ็ต: " + err.message);
+            }
+        }
+
+        async function exportPickingFormExcel(docId) {
+            try {
+                const doc = await db.collection('requisitions').doc(docId).get();
+                if (!doc.exists) { alert("❌ ไม่พบข้อมูลใบจัดสินค้าสำหรับส่งออก"); return; }
+                const item = doc.data();
+                const docNo = item.docNo || doc.id.slice(0, 8);
+                let dateStr = '-';
+                if (item.createdAt && item.createdAt.toDate) {
+                    const d = item.createdAt.toDate();
+                    dateStr = `${d.toLocaleDateString('th-TH')} ${d.toLocaleTimeString('th-TH')}`;
+                }
+
+                let csvContent = "\uFEFF";
+                csvContent += `"บริษัท ไอซ์โปรซาวด์ จำกัด (ICEPROSOUND CO., LTD.)"\n`;
+                csvContent += `"ใบจัดสินค้าอุปกรณ์ (EQUIPMENT PICKING ORDER)"\n`;
+                csvContent += `"เลขที่เอกสาร: ${docNo}"\n`;
+                csvContent += `"วันที่ทำรายการ: ${dateStr}"\n`;
+                csvContent += `"ช่าง/ผู้เบิก: ${(item.techName || item.technician || '-').replace(/"/g, '""')}"\n`;
+                csvContent += `"ไซต์งาน: ${(item.jobSite || item.siteName || '-').replace(/"/g, '""')}"\n\n`;
+
+                csvContent += `"ลำดับ","รายการอุปกรณ์","จำนวนขอเบิก","จำนวนจ่ายจริง","จำนวนค้างจ่าย","หน่วย","หมายเหตุการจัด"\n`;
+
+                (item.items || []).forEach((it, idx) => {
+                    const name = (it.name || '-').replace(/"/g, '""');
+                    const qty = it.qty || 0;
+                    const issued = (it.issuedQty !== undefined && it.issuedQty !== null && it.issuedQty !== '') ? it.issuedQty : qty;
+                    const missing = (it.missingQty !== undefined && it.missingQty !== null && it.missingQty !== '') ? it.missingQty : Math.max(0, qty - issued);
+                    const unit = (it.unit || 'ชิ้น').replace(/"/g, '""');
+                    const note = (it.note || '').replace(/"/g, '""');
+
+                    csvContent += `"${idx + 1}","${name}",${qty},${issued},${missing},"${unit}","${note}"\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `ใบจัดสินค้า_${docNo}_${new Date().toISOString().slice(0, 10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert("❌ เกิดข้อผิดพลาด: " + err.message);
+            }
+        }
+
+        async function exportRequisitionsSummaryToExcel() {
+            let listToExport = cachedRequisitionsForReport;
+            if (!listToExport || listToExport.length === 0) {
+                try {
+                    const snap = await db.collection('requisitions').orderBy('createdAt', 'desc').limit(50).get();
+                    listToExport = [];
+                    snap.forEach(d => { const item = d.data(); item.id = d.id; listToExport.push(item); });
+                } catch(e) {
+                    alert("❌ เกิดข้อผิดพลาดในการดึงข้อมูล: " + e.message);
+                    return;
+                }
+            }
+
+            if (!listToExport || listToExport.length === 0) {
+                alert("❌ ไม่มีข้อมูลรายการใบเบิกให้ส่งออก Excel");
+                return;
+            }
+
+            let csv = "\uFEFFลำดับ,เลขที่ใบเบิก,วันเวลาเบิก,ช่างผู้เบิก,ไซต์งาน,ที่อยู่ไซต์งาน,ผู้จ่ายงาน/เซลล์,จำนวนอุปกรณ์(ชิ้น),สถานะการคืน,พิมพ์ใบจัดแล้ว,มีรูปถ่ายหลักฐาน,ผู้อนุมัติ,ผู้ตรวจรับ,หมายเหตุ\n";
+
+            listToExport.forEach((data, index) => {
+                let dateStr = '-';
+                if (data.createdAt) {
+                    try {
+                        const d = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                        dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+                    } catch(e) { dateStr = '-'; }
+                }
+                const docNo = data.docNo || data.id.slice(0, 8);
+                const tech = (data.techName || data.technician || data.techFullName || '-').replace(/"/g, '""');
+                const site = (data.jobSite || data.siteName || data.site || '-').replace(/"/g, '""');
+                const addr = (data.jobAddress || data.deliveryAddress || data.address || '-').replace(/"/g, '""');
+                const sale = (data.jobSale || data.sales || '-').replace(/"/g, '""');
+                const totalQty = (data.items || []).reduce((sum, it) => sum + (parseInt(it.qty) || 0), 0);
+                const status = data.returnStatus || 'ยังไม่คืน';
+                const isPickingPrinted = data.isPrintedForPicking ? 'พิมพ์แล้ว' : 'รอพิมพ์';
+                const hasProof = data.pickingProofImage ? 'มีรูปหลักฐาน' : 'ไม่มี';
+                const approver = (data.approverName || '-').replace(/"/g, '""');
+                const receiver = (data.receiverName || '-').replace(/"/g, '""');
+                const note = (data.note || '').replace(/"/g, '""');
+
+                csv += `"${index + 1}","${docNo}","${dateStr}","${tech}","${site}","${addr}","${sale}",${totalQty},"${status}","${isPickingPrinted}","${hasProof}","${approver}","${receiver}","${note}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `รายงานใบเบิก_ICEPROSOUND_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
         async function loadReportData() {
             const tableBody = document.getElementById('reportTableBody');
             tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400"><div class="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>กำลังดึงข้อมูล...</td></tr>';
@@ -2691,15 +3384,28 @@
                 }
 
                 let html = '';
+                cachedRequisitionsForReport = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    data.id = doc.id;
+                    cachedRequisitionsForReport.push(data);
                     // แปลง Timestamp เป็นเวลาที่อ่านได้
                     const dateObj = data.createdAt ? data.createdAt.toDate() : new Date();
                     const dateStr = dateObj.toLocaleDateString('th-TH') + ' ' + dateObj.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
                     
-                    const statusBadge = data.status === 'pending' 
+                    let statusBadge = data.status === 'pending' 
                         ? '<span class="px-2 py-1 bg-yellow-900/50 text-yellow-400 text-xs rounded border border-yellow-700">รอดำเนินการ</span>'
                         : '<span class="px-2 py-1 bg-green-900/50 text-green-400 text-xs rounded border border-green-700">เสร็จสิ้น</span>';
+
+                    // สถานะพิมพ์ใบจัดสินค้า
+                    if (data.isPrintedForPicking) {
+                        statusBadge += '<div class="mt-1"><span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1">✓ จัดสินค้าแล้ว</span></div>';
+                    } else {
+                        statusBadge += '<div class="mt-1"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 inline-flex items-center gap-1 animate-pulse">● รอพิมพ์ใบจัด</span></div>';
+                    }
+                    if (data.pickingProofImage) {
+                        statusBadge += '<div class="mt-1"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 inline-flex items-center gap-1">📷 มีรูปหลักฐาน</span></div>';
+                    }
 
                     html += `
                         <tr class="hover:bg-slate-700/50 transition whitespace-nowrap">
@@ -2716,10 +3422,11 @@
                             <td class="px-6 py-4 text-[15px] text-slate-300">${data.jobSale || data.sales || '-'}</td>
                             <td class="px-6 py-4 text-center text-lg font-bold text-white">${data.totalItems}</td>
                             <td class="px-6 py-4 text-center">${statusBadge}</td>
-                            <td class="px-6 py-4 text-center space-x-2">
-                                <button onclick="printRequisition('${doc.id}')" class="text-blue-400 hover:text-blue-200 transition text-lg" title="พิมพ์ใบเบิก">🖨️</button>
-                                <button onclick="editRequisition('${doc.id}')" class="text-yellow-400 hover:text-yellow-200 transition text-lg" title="แก้ไขใบเบิก">✏️</button>
-                                <button onclick="deleteRequisition('${doc.id}')" class="text-red-400 hover:text-red-200 transition text-lg" title="ลบใบเบิก">🗑️</button>
+                            <td class="px-6 py-4 text-center space-x-1.5 whitespace-nowrap">
+                                <button onclick="printPickingForm('${doc.id}')" class="text-xs bg-amber-600 hover:bg-amber-500 px-2.5 py-1.5 rounded-lg text-white font-semibold shadow transition inline-flex items-center gap-1" title="พิมพ์ใบจัดสินค้าอุปกรณ์สำหรับช่าง">📦 ใบจัดสินค้า</button>
+                                <button onclick="printRequisition('${doc.id}')" class="text-blue-400 hover:text-blue-200 transition text-lg p-1" title="พิมพ์ใบเบิก">🖨️</button>
+                                <button onclick="editRequisition('${doc.id}')" class="text-yellow-400 hover:text-yellow-200 transition text-lg p-1" title="แก้ไขใบเบิก">✏️</button>
+                                <button onclick="deleteRequisition('${doc.id}')" class="text-red-400 hover:text-red-200 transition text-lg p-1" title="ลบใบเบิก">🗑️</button>
                             </td>
                         </tr>
                     `;
@@ -3479,6 +4186,8 @@
         // ========================================================
         let html5QrCode = null;
         let currentCameraFacing = "environment"; // กล้องหลังเป็นค่าเริ่มต้น
+        let availableCameras = [];
+        let currentCameraIndex = 0;
         let lastScannedBarcode = '';
         let lastScannedTime = 0;
 
@@ -3487,39 +4196,104 @@
             if (!modal) return;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
+
             const loading = document.getElementById('scannerLoading');
             if (loading) loading.classList.remove('hidden');
             showScannerFeedback('', 'none');
-            
+
             if (typeof Html5Qrcode === 'undefined') {
                 alert("⚠️ ไลบรารีสแกนเนอร์กำลังโหลด กรุณารอสักครู่แล้วลองใหม่อีกครั้ง");
                 closeScannerModal();
                 return;
             }
-            
+
+            // รีเซ็ตล้าง DOM และ instance เดิมเพื่อป้องกันการเกิดกล่องดำซ้อนกัน
+            if (html5QrCode) {
+                try {
+                    if (html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                    }
+                    html5QrCode.clear();
+                } catch (e) {
+                    console.warn("Reset previous scanner instance:", e);
+                }
+            }
+
+            const viewport = document.getElementById('scannerViewport');
+            if (viewport) viewport.innerHTML = '';
+
+            html5QrCode = new Html5Qrcode("scannerViewport");
+
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+
+            // ตรวจหาอุปกรณ์กล้องจริงของมือถือเพื่อเลือกกล้องหลังอย่างแม่นยำ
+            try {
+                if (!availableCameras || availableCameras.length === 0) {
+                    try {
+                        const devices = await Html5Qrcode.getCameras();
+                        if (devices && devices.length > 0) {
+                            availableCameras = devices;
+                            const backIdx = devices.findIndex(d => 
+                                (d.label || '').toLowerCase().includes('back') || 
+                                (d.label || '').toLowerCase().includes('rear') || 
+                                (d.label || '').toLowerCase().includes('environment')
+                            );
+                            currentCameraIndex = backIdx !== -1 ? backIdx : (devices.length - 1);
+                        }
+                    } catch (camErr) {
+                        console.warn("getCameras warning:", camErr);
+                    }
+                }
+
+                if (availableCameras && availableCameras.length > 0) {
+                    const camId = availableCameras[currentCameraIndex].id;
+                    await html5QrCode.start(camId, config, onScanSuccess, onScanFailure);
+                } else {
+                    await html5QrCode.start({ facingMode: currentCameraFacing }, config, onScanSuccess, onScanFailure);
+                }
+
+                if (loading) loading.classList.add('hidden');
+            } catch (err) {
+                console.warn("Primary camera start failed, trying fallback facingMode:", err);
+                try {
+                    await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
+                    if (loading) loading.classList.add('hidden');
+                } catch (fallbackErr) {
+                    console.error("Camera start error:", fallbackErr);
+                    if (loading) loading.classList.add('hidden');
+                    
+                    let helpMsg = "⚠️ ไม่สามารถเปิดกล้องได้: ";
+                    if (fallbackErr.name === 'NotAllowedError' || (fallbackErr.message && fallbackErr.message.includes('Permission'))) {
+                        helpMsg += "กรุณาแตะไอคอน 🔒 ข้างชื่อเว็บด้านบนเพื่อ 'อนุญาต (Allow)' กล้อง หรือแตะปุ่ม '📸 ถ่ายรูปสแกน' ด้านล่างได้ทันทีค่ะ";
+                    } else {
+                        helpMsg += (fallbackErr.message || "กรุณาอนุญาตสิทธิ์เข้าถึงกล้อง") + " หรือแตะปุ่ม '📸 ถ่ายรูปสแกน' ด้านล่างได้ทันทีค่ะ";
+                    }
+                    showScannerFeedback(helpMsg, "error");
+                }
+            }
+        }
+
+        async function handleQrFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            showScannerFeedback('🔍 กำลังอ่านรหัสจากรูปภาพ...', 'info');
             try {
                 if (!html5QrCode) {
                     html5QrCode = new Html5Qrcode("scannerViewport");
                 }
-                
-                const config = {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0
-                };
-                
-                await html5QrCode.start(
-                    { facingMode: currentCameraFacing },
-                    config,
-                    onScanSuccess,
-                    onScanFailure
-                );
-                if (loading) loading.classList.add('hidden');
+                const decodedText = await html5QrCode.scanFile(file, false);
+                if (decodedText) {
+                    await onScanSuccess(decodedText);
+                }
             } catch (err) {
-                console.error("Camera start error:", err);
-                if (loading) loading.classList.add('hidden');
-                showScannerFeedback("⚠️ ไม่สามารถเปิดกล้องได้: " + (err.message || "กรุณาอนุญาตสิทธิ์เข้าถึงกล้อง"), "error");
+                console.warn("Scan file error:", err);
+                showScannerFeedback('⚠️ ไม่พบ QR Code หรือ Barcode ในรูปภาพ กรุณาลองใหม่อีกครั้งค่ะ', 'error');
+            } finally {
+                event.target.value = '';
             }
         }
 
@@ -3529,9 +4303,12 @@
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             }
-            if (html5QrCode && html5QrCode.isScanning) {
+            if (html5QrCode) {
                 try {
-                    await html5QrCode.stop();
+                    if (html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                    }
+                    html5QrCode.clear();
                 } catch (e) {
                     console.warn("Stop scanner error:", e);
                 }
@@ -3540,10 +4317,24 @@
         }
 
         async function switchScannerCamera() {
-            if (!html5QrCode || !html5QrCode.isScanning) return;
-            currentCameraFacing = currentCameraFacing === "environment" ? "user" : "environment";
+            if (!availableCameras || availableCameras.length < 2) {
+                currentCameraFacing = currentCameraFacing === "environment" ? "user" : "environment";
+                try {
+                    if (html5QrCode && html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                    }
+                    await openScannerModal();
+                } catch (err) {
+                    console.error("Switch camera error:", err);
+                }
+                return;
+            }
+
+            currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
             try {
-                await html5QrCode.stop();
+                if (html5QrCode && html5QrCode.isScanning) {
+                    await html5QrCode.stop();
+                }
                 await openScannerModal();
             } catch (err) {
                 console.error("Switch camera error:", err);
@@ -3632,6 +4423,7 @@
         // Initialize UI
         updateCartUI();
         loadUnitList();
+        initIndexRequisitionAlertBadge();
     </script>
     <!-- 📱 MOBILE & TABLET FLOATING NAVIGATION BAR (BOTTOM DOCK) -->
     <div id="mobileQuickNav" class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 glass-panel border border-slate-600/70 rounded-full px-4 py-2 shadow-2xl flex items-center gap-2 bg-slate-900/95 backdrop-blur-md no-print">
