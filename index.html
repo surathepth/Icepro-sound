@@ -4224,53 +4224,71 @@
 
             html5QrCode = new Html5Qrcode("scannerViewport");
 
+            // กำหนดขนาดกรอบสแกนแบบ Responsive Dynamic ตามสัดส่วนหน้าจอมือถือจริง
             const config = {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
+                fps: 15,
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    const minDim = Math.min(viewfinderWidth, viewfinderHeight);
+                    const size = Math.max(160, Math.min(260, Math.floor(minDim * 0.72)));
+                    return { width: size, height: size };
+                },
                 aspectRatio: 1.0
             };
 
-            // ตรวจหาอุปกรณ์กล้องจริงของมือถือเพื่อเลือกกล้องหลังอย่างแม่นยำ
+            // เชื่อมต่อกล้องมือถือแบบ Mobile-Optimized Direct Stream (ขอสิทธิ์กล้องหลังทันที)
             try {
-                if (!availableCameras || availableCameras.length === 0) {
-                    try {
-                        const devices = await Html5Qrcode.getCameras();
-                        if (devices && devices.length > 0) {
-                            availableCameras = devices;
-                            const backIdx = devices.findIndex(d => 
-                                (d.label || '').toLowerCase().includes('back') || 
-                                (d.label || '').toLowerCase().includes('rear') || 
-                                (d.label || '').toLowerCase().includes('environment')
-                            );
-                            currentCameraIndex = backIdx !== -1 ? backIdx : (devices.length - 1);
-                        }
-                    } catch (camErr) {
-                        console.warn("getCameras warning:", camErr);
-                    }
-                }
-
-                if (availableCameras && availableCameras.length > 0) {
-                    const camId = availableCameras[currentCameraIndex].id;
-                    await html5QrCode.start(camId, config, onScanSuccess, onScanFailure);
-                } else {
-                    await html5QrCode.start({ facingMode: currentCameraFacing }, config, onScanSuccess, onScanFailure);
-                }
-
+                // ระดับที่ 1: ขอเปิดกล้องหลังแบบคมชัดสูง (Mobile Environment Camera)
+                await html5QrCode.start(
+                    { facingMode: { ideal: "environment" } },
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                );
                 if (loading) loading.classList.add('hidden');
+
+                // หลังจากกล้องเปิดติดและได้รับสิทธิ์แล้ว ค่อยดึงรายชื่อกล้องไว้รองรับปุ่มสลับกล้อง
+                try {
+                    const devices = await Html5Qrcode.getCameras();
+                    if (devices && devices.length > 0) {
+                        availableCameras = devices;
+                    }
+                } catch (camErr) {
+                    console.warn("getCameras warning:", camErr);
+                }
             } catch (err) {
                 console.warn("Primary camera start failed, trying fallback facingMode:", err);
                 try {
-                    await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
+                    // ระดับที่ 2: หากกล้องหลังติดขัด ให้ลองเปิดกล้องใดๆ ในเครื่อง (Fallback Camera)
+                    await html5QrCode.start(
+                        { facingMode: "user" },
+                        config,
+                        onScanSuccess,
+                        onScanFailure
+                    );
                     if (loading) loading.classList.add('hidden');
                 } catch (fallbackErr) {
                     console.error("Camera start error:", fallbackErr);
                     if (loading) loading.classList.add('hidden');
                     
-                    let helpMsg = "⚠️ ไม่สามารถเปิดกล้องได้: ";
+                    // ระดับที่ 3: หากสตรีมวิดีโอสดไม่สามารถเปิดได้ ปรับช่องกล้องให้มีปุ่มถ่ายรูปสแกนเด่นชัดทันที
+                    if (viewport) {
+                        viewport.innerHTML = `
+                            <div class="py-8 flex flex-col items-center justify-center text-center p-4">
+                                <span class="text-4xl mb-2">📸</span>
+                                <p class="text-sm text-slate-200 font-medium mb-1">ไม่สามารถสตรีมกล้องสดได้</p>
+                                <p class="text-xs text-slate-400 mb-3">แตะปุ่มด้านล่างเพื่อเปิดกล้องถ่ายรูปสแกนได้ทันทีค่ะ</p>
+                                <button type="button" onclick="document.getElementById('qrFileInput').click()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg flex items-center gap-2 transition active:scale-95">
+                                    📸 เปิดกล้องถ่ายรูปสแกน
+                                </button>
+                            </div>
+                        `;
+                    }
+                    
+                    let helpMsg = "⚠️ ไม่สามารถเปิดกล้องสดได้: ";
                     if (fallbackErr.name === 'NotAllowedError' || (fallbackErr.message && fallbackErr.message.includes('Permission'))) {
-                        helpMsg += "กรุณาแตะไอคอน 🔒 ข้างชื่อเว็บด้านบนเพื่อ 'อนุญาต (Allow)' กล้อง หรือแตะปุ่ม '📸 ถ่ายรูปสแกน' ด้านล่างได้ทันทีค่ะ";
+                        helpMsg += "กรุณาแตะไอคอน 🔒 ข้างชื่อเว็บด้านบนเพื่อ 'อนุญาต (Allow)' กล้อง หรือแตะปุ่ม '📸 เปิดกล้องถ่ายรูปสแกน' ด้านบนได้ทันทีค่ะ";
                     } else {
-                        helpMsg += (fallbackErr.message || "กรุณาอนุญาตสิทธิ์เข้าถึงกล้อง") + " หรือแตะปุ่ม '📸 ถ่ายรูปสแกน' ด้านล่างได้ทันทีค่ะ";
+                        helpMsg += (fallbackErr.message || "ระบบเบราว์เซอร์ไม่อนุญาตสตรีมกล้องสด") + " หรือแตะปุ่ม '📸 เปิดกล้องถ่ายรูปสแกน' ด้านบนได้ทันทีค่ะ";
                     }
                     showScannerFeedback(helpMsg, "error");
                 }
@@ -4282,7 +4300,13 @@
             if (!file) return;
             showScannerFeedback('🔍 กำลังอ่านรหัสจากรูปภาพ...', 'info');
             try {
-                if (!html5QrCode) {
+                if (html5QrCode) {
+                    try {
+                        if (html5QrCode.isScanning) {
+                            await html5QrCode.stop();
+                        }
+                    } catch (e) {}
+                } else {
                     html5QrCode = new Html5Qrcode("scannerViewport");
                 }
                 const decodedText = await html5QrCode.scanFile(file, false);
@@ -4417,7 +4441,7 @@
             } else {
                 el.classList.add('bg-blue-600/30', 'text-blue-300', 'border', 'border-blue-500');
             }
-            el.textContent = msg;
+            el.innerHTML = msg;
         }
 
         // Initialize UI
